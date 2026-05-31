@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Karen's Teaching Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root {
+  --navy: #1a2d52;
+  --navy2: #243a6b;
+  --gold: #f5a623;
+  --gold2: #ffd166;
+  --white: #ffffff;
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --border: #e2e8f4;
+  --muted: #7a8aaa;
+  --text: #1a2d52;
+  --green: #1a7f5a;
+  --green-bg: #e6f7f1;
+  --red: #c0392b;
+  --red-bg: #fdecea;
+  --online-color: #0077b6;
+  --online-bg: #e0f0fb;
+  --shadow: 0 2px 16px rgba(26,45,82,0.08);
+  --shadow-md: 0 4px 24px rgba(26,45,82,0.13);
+  --r: 14px;
+  --r-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* ── FIREBASE SETUP SCREEN ── */
+#firebase-setup{
+  min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 60%,#1a4a7a 100%);
+  padding:24px;
+}
+.setup-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:20px;padding:32px 24px;width:100%;max-width:420px;backdrop-filter:blur(12px);}
+.setup-logo{text-align:center;margin-bottom:24px;}
+.setup-logo img{height:48px;filter:brightness(0) invert(1);opacity:0.9;}
+.setup-logo-text{font-family:'Cormorant Garamond',serif;color:#fff;font-size:22px;font-weight:700;margin-top:8px;}
+.setup-title{color:#fff;font-size:17px;font-weight:600;margin-bottom:6px;}
+.setup-sub{color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:20px;line-height:1.6;}
+.setup-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.setup-num{width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--navy);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.setup-step-text{color:rgba(255,255,255,0.8);font-size:13px;line-height:1.6;}
+.setup-step-text a{color:var(--gold2);text-decoration:none;}
+.setup-step-text code{background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:12px;color:#fff;}
+.setup-input{width:100%;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);border-radius:var(--r-sm);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;padding:10px 14px;outline:none;margin-top:12px;transition:border 0.2s;}
+.setup-input:focus{border-color:var(--gold);}
+.setup-input::placeholder{color:rgba(255,255,255,0.3);}
+.btn-setup{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;padding:13px;cursor:pointer;margin-top:16px;transition:opacity 0.2s;}
+.btn-setup:hover{opacity:0.9;}
+.setup-err{background:rgba(192,57,43,0.2);border:1px solid rgba(192,57,43,0.4);color:#ffaaaa;border-radius:var(--r-sm);padding:10px 14px;font-size:13px;margin-top:12px;display:none;}
+
+/* ── LOGIN ── */
+#login-screen{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 60%,#1a4a7a 100%);
+  padding:24px;
+}
+.login-logo{margin-bottom:28px;text-align:center;}
+.login-logo-img{height:56px;filter:brightness(0) invert(1);}
+.login-brand{font-family:'Cormorant Garamond',serif;color:#fff;font-size:26px;font-weight:700;margin-top:10px;letter-spacing:0.5px;}
+.login-tagline{color:rgba(255,255,255,0.45);font-size:12px;margin-top:4px;letter-spacing:1px;text-transform:uppercase;}
+.login-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;backdrop-filter:blur(12px);}
+.login-card label{display:block;color:rgba(255,255,255,0.55);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.login-card select,.login-card input{
+  width:100%;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);
+  border-radius:var(--r-sm);color:#fff;font-family:'Outfit',sans-serif;font-size:15px;
+  padding:12px 14px;margin-bottom:16px;outline:none;transition:border 0.2s;-webkit-appearance:none;
+}
+.login-card select option{background:#1a2d52;color:#fff;}
+.login-card input::placeholder{color:rgba(255,255,255,0.3);}
+.login-card select:focus,.login-card input:focus{border-color:var(--gold);}
+.btn-login{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;padding:14px;cursor:pointer;transition:opacity 0.2s,transform 0.1s;letter-spacing:0.3px;}
+.btn-login:active{transform:scale(0.98);}
+.login-err{background:rgba(192,57,43,0.2);border:1px solid rgba(192,57,43,0.4);color:#ffaaaa;border-radius:var(--r-sm);padding:10px 14px;font-size:13px;margin-top:12px;text-align:center;display:none;}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--navy);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.18);}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-logo img{height:28px;filter:brightness(0) invert(1);}
+.topbar-name{font-family:'Cormorant Garamond',serif;color:#fff;font-size:17px;font-weight:700;letter-spacing:0.3px;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.role-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(245,166,35,0.18);color:var(--gold2);border:1px solid rgba(245,166,35,0.25);}
+.btn-logout{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.65);font-family:'Outfit',sans-serif;font-size:12px;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all 0.2s;}
+.btn-logout:hover{background:rgba(255,255,255,0.15);color:#fff;}
+
+.tabs{background:var(--navy2);display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,0.07);}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:13px 18px;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab:hover:not(.active){color:rgba(255,255,255,0.75);}
+
+.main{flex:1;padding:18px 14px 80px;max-width:700px;margin:0 auto;width:100%;}
+.page{display:none;}.page.active{display:block;}
+
+/* Cards */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:14px;}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-title::before{content:'';width:3px;height:13px;background:var(--gold);border-radius:2px;display:block;}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.stat-tile{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 14px;border-top:3px solid var(--border);}
+.stat-tile.t-gold{border-top-color:var(--gold);}
+.stat-tile.t-green{border-top-color:var(--green);}
+.stat-tile.t-navy{border-top-color:var(--navy);}
+.stat-tile.t-red{border-top-color:var(--red);}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px;}
+.stat-val{font-size:22px;font-weight:700;color:var(--text);}
+.stat-unit{font-size:12px;color:var(--muted);font-weight:400;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* Form */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;}
+.form-control{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:15px;font-family:'Outfit',sans-serif;color:var(--text);padding:10px 13px;background:#fff;outline:none;transition:border 0.2s;-webkit-appearance:none;}
+.form-control:focus{border-color:var(--gold);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;transition:all 0.18s;font-size:14px;padding:11px 18px;}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-gold{background:var(--gold);color:var(--navy);}
+.btn-block{width:100%;}
+.btn-sm{font-size:12px;padding:7px 13px;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--bg);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.12s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--bg);}
+tbody td{padding:11px 12px;vertical-align:middle;}
+
+/* Badge */
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.2px;}
+.badge-green{background:var(--green-bg);color:var(--green);}
+.badge-gold{background:#fff3d6;color:#a06800;}
+.badge-navy{background:#e6eaf4;color:var(--navy);}
+.badge-online{background:var(--online-bg);color:var(--online-color);}
+.badge-red{background:var(--red-bg);color:var(--red);}
+
+/* Summary */
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+.sum-row:last-child{border-bottom:none;}
+.sum-label{font-size:14px;color:var(--text);}
+.sum-amt{font-size:15px;font-weight:700;}
+.sum-amt.green{color:var(--green);}
+.sum-amt.red{color:var(--red);}
+.sum-amt.gold{color:#a06800;}
+.divider{border:none;border-top:2px dashed var(--border);margin:6px 0;}
+
+/* Alert */
+.alert{border-radius:var(--r-sm);padding:11px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:9px;}
+.alert-info{background:var(--online-bg);color:var(--online-color);border:1px solid #b3d9f0;}
+.alert-warn{background:#fff8e1;color:#8a5c00;border:1px solid #ffe082;}
+.alert-success{background:var(--green-bg);color:var(--green);border:1px solid #a7e6cc;}
+
+/* Month bar */
+.month-bar{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;box-shadow:var(--shadow);}
+.month-bar label{font-size:13px;color:var(--muted);font-weight:500;flex:1;}
+.month-bar select{border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;font-family:'Outfit',sans-serif;color:var(--text);padding:7px 11px;background:#fff;outline:none;font-weight:600;-webkit-appearance:none;}
+
+/* Page head */
+.pg-head{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.pg-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+
+/* Empty */
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-icon{font-size:36px;margin-bottom:8px;}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,45,82,0.55);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:22px 18px 36px;width:100%;max-width:500px;animation:slideUp 0.26s cubic-bezier(.22,.8,.34,1);max-height:90vh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--navy);margin-bottom:18px;text-align:center;}
+
+/* Conditional fields */
+.cond-field{display:none;}
+.cond-field.show{display:block;}
+
+/* Online badge */
+.mode-online{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--online-bg);color:var(--online-color);}
+.mode-offline{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--green-bg);color:var(--green);}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Student info card */
+.stu-card{background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:12px;border-left:3px solid var(--gold);}
+.stu-name{font-weight:700;font-size:15px;color:var(--navy);}
+.stu-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+
+textarea.form-control{resize:vertical;min-height:70px;}
+</style>
+</head>
+<body>
+
+<!-- FIREBASE SETUP -->
+<div id="firebase-setup">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <div style="width:56px;height:56px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+        <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:26px;color:var(--navy);">K</span>
+      </div>
+      <div class="setup-logo-text">Karen's Teaching Group</div>
+    </div>
+    <div class="setup-title">🔧 首次设置：连接云端数据库</div>
+    <div class="setup-sub">只需做一次，完成后所有老师的数据实时同步。</div>
+
+    <div class="setup-step">
+      <div class="setup-num">1</div>
+      <div class="setup-step-text">打开 <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>，用你的 Google 账号登录</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">2</div>
+      <div class="setup-step-text">点「新增专案」→ 输入名称（如 <code>karens-teaching</code>）→ 完成建立</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">3</div>
+      <div class="setup-step-text">进入专案 → 左侧选「Firestore Database」→「建立资料库」→ 选「以测试模式启动」</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">4</div>
+      <div class="setup-step-text">回到专案首页 → 点「&lt;/&gt;」(网页应用) → 注册应用 → 复制 <code>firebaseConfig</code> 里的内容贴到下方</div>
+    </div>
+
+    <textarea class="setup-input" id="firebase-config-input" rows="6" placeholder='贴上你的 firebaseConfig，例如：
+{
+  apiKey: "AIza...",
+  authDomain: "karens-teaching.firebaseapp.com",
+  projectId: "karens-teaching",
+  ...
+}'></textarea>
+    <button class="btn-setup" onclick="connectFirebase()">连接并进入系统 →</button>
+    <div class="setup-err" id="setup-err">配置格式有误，请重新贴上 firebaseConfig 内容</div>
+    <div style="margin-top:16px;text-align:center;">
+      <button onclick="useDemoMode()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;text-decoration:underline;">先用本地演示模式（数据不同步）</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">
+    <div style="width:64px;height:64px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+      <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:30px;color:var(--navy);">K</span>
+    </div>
+    <div class="login-brand">Karen's Teaching Group</div>
+    <div class="login-tagline">Teaching Management System</div>
+    <div style="background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);color:var(--gold2);font-size:11px;padding:6px 14px;border-radius:20px;margin-top:8px;">⚡ 需要开启 VPN 才能正常使用</div>
+  </div>
+  <div class="login-card">
+    <label>登录身份</label>
+    <select id="login-role">
+      <option value="">— 请选择 —</option>
+      <option value="boss">👑 Karen（管理员）</option>
+      <optgroup label="── 老师 ──" id="teacher-opts"></optgroup>
+    </select>
+    <label>密码</label>
+    <input type="password" id="login-pwd" placeholder="输入密码" autocomplete="off">
+    <button class="btn-login" onclick="doLogin()">登 入</button>
+    <div class="login-err" id="login-err">身份或密码错误，请重试</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div style="width:30px;height:30px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;color:var(--navy);">K</span>
+      </div>
+      <span class="topbar-name">Karen's Teaching Group</span>
+    </div>
+    <div class="topbar-right">
+      <span class="role-badge" id="topbar-role"></span>
+      <button class="btn-logout" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="main" id="main"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeMBG(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const TEACHERS = [
+  {id:'T01',name:'Karen',   pwd:'karen',    historyXP:8000,   rate:275, rates:{}},
+  {id:'T02',name:'Sherry',  pwd:'sherry',   historyXP:329.79, rate:140, rates:{'英语':150,'中文':140,'数学':140}},
+  {id:'T03',name:'Cici',    pwd:'cici',     historyXP:805.45, rate:150, rates:{'offline':150,'online':120}},
+  {id:'T04',name:'春艳',    pwd:'chunyan',  historyXP:0,      rate:135, rates:{}},
+  {id:'T05',name:'Veronica',pwd:'veronica', historyXP:25.5,   rate:90,  rates:{}},
+  {id:'T06',name:'Guoqing', pwd:'guoqing',  historyXP:129.5,  rate:115, rates:{}},
+  {id:'T07',name:'Wendy',   pwd:'wendy',    historyXP:427.25, rate:110, rates:{}},
+  {id:'T08',name:'Phoebe',  pwd:'phoebe',   historyXP:470.16, rate:125, rates:{}},
+  {id:'T09',name:'Marie',   pwd:'marie',    historyXP:0,      rate:120, rates:{}},
+  {id:'T10',name:'Chris',   pwd:'chris',    historyXP:203.41, rate:115, rates:{}},
+];
+
+function getEffectiveRate(teacher, subject, mode) {
+  if (!teacher) return 0;
+  const r = teacher.rates || {};
+  const keys = Object.keys(r);
+  if (keys.includes('offline') || keys.includes('online')) {
+    return mode === 'online' ? (r['online'] || teacher.rate) : (r['offline'] || teacher.rate);
+  }
+  if (subject && r[subject]) return r[subject];
+  return teacher.rate || 0;
+}
+
+const STUDENTS = [
+  {id:'S01', name:'艾生',    school:'YCIS',   grade:'五年级', subject:'中文', rate:0, mode:'offline', address:'上海市长宁区剑河路2288号温莎花园56号', parent:'Cody', dob:'2016-06-08', note:''},
+  {id:'S02', name:'Colin',   school:'YKPao',  grade:'五年级', subject:'中文', rate:0, mode:'offline', address:'虹桥路128弄4号楼302室', parent:'Rinnie / Anthony', note:''},
+  {id:'S03', name:'Mila',    school:'SCIS',   grade:'五年级', subject:'中文', rate:0, mode:'offline', address:'虹桥路128弄4号楼302室', parent:'Rinnie / Anthony', note:'Colin双胞胎姐姐'},
+  {id:'S04', name:'Neil',    school:'',       grade:'',       subject:'中文', rate:0, mode:'offline', address:'虹桥路128弄4号楼302室', parent:'Rinnie / Anthony', note:'Colin弟弟，学校年级待补充'},
+  {id:'S05', name:'Alex',    school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'法国', parent:'Juliette', note:'法国兄弟'},
+  {id:'S06', name:'Louis',   school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'法国', parent:'Juliette', note:'法国兄弟'},
+  {id:'S07', name:'Alexa',   school:'',       grade:'',       subject:'中文', rate:0, mode:'offline', address:'剑河路2222弄温莎豪园26号', parent:'', note:''},
+  {id:'S08', name:'Kane',    school:'',       grade:'',       subject:'中文', rate:0, mode:'offline', address:'剑河路2222弄温莎豪园26号', parent:'', note:''},
+  {id:'S09', name:'Blanche', school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'法国', parent:'', dob:'2012-01-19', note:'法国人'},
+  {id:'S10', name:'Charlie', school:'YKPao',  grade:'',       subject:'中文', rate:0, mode:'offline', address:'静安枫景苑36A', parent:'Jung / Kelly', note:''},
+  {id:'S11', name:'Rei',     school:'YKPao',  grade:'',       subject:'中文', rate:0, mode:'offline', address:'静安枫景苑36A', parent:'Jung / Kelly', note:''},
+  {id:'S12', name:'Quinn',   school:'YKPao',  grade:'',       subject:'中文', rate:0, mode:'offline', address:'静安枫景苑36A', parent:'Jung / Kelly', note:''},
+  {id:'S13', name:'Cynthia', school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'香港', parent:'Shirley', note:'中国人'},
+  {id:'S14', name:'Damien',  school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'香港', parent:'', note:'双胞胎，香港'},
+  {id:'S15', name:'Dylann',  school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'香港', parent:'', note:'双胞胎，香港'},
+  {id:'S16', name:'Ella',    school:'YCIS',   grade:'四年级', subject:'中文', rate:0, mode:'offline', address:'静安区武定路650号7号楼3902室，静安豪景苑', parent:'Yidi', note:''},
+  {id:'S17', name:'Ellie',   school:'',       grade:'二年级', subject:'中文', rate:0, mode:'offline', address:'静安区昌平路658弄3号楼1803丽致公寓', parent:'Vivian', note:''},
+  {id:'S18', name:'Emma',    school:'',       grade:'成人',   subject:'中文', rate:0, mode:'offline', address:'嘉里中心2号楼', parent:'', note:'法国人成人'},
+  {id:'S19', name:'Evelyn',  school:'',       grade:'',       subject:'中文', rate:0, mode:'offline', address:'Studio', parent:'', note:'来studio上课，家长年纪待补充'},
+  {id:'S20', name:'Gesha',   school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'俄罗斯', parent:'', note:'俄罗斯姐弟'},
+  {id:'S21', name:'Sophia',  school:'',       grade:'',       subject:'中文', rate:0, mode:'online',  timezone:'俄罗斯', parent:'', note:'俄罗斯姐弟'},
+  {id:'S22', name:'Hannah',  school:'YCIS',   grade:'四年级', subject:'中文', rate:0, mode:'offline', address:'长宁区虹桥路1720弄9号楼11EF', parent:'Diane', note:''},
+  {id:'S23', name:'Jaesun',  school:'YKPao',  grade:'二年级', subject:'中文', rate:0, mode:'offline', address:'华亭一期5号楼103', parent:'Emily / Dan', note:''},
+  {id:'S24', name:'Jordan',  school:'YKPao',  grade:'三年级', subject:'中文', rate:0, mode:'offline', address:'汇川路88号3号楼3603', parent:'Lisa / Joshua', note:''},
+  {id:'S25', name:'Tyler',   school:'YKPao',  grade:'一年级', subject:'英语', rate:0, mode:'offline', address:'汇川路88号3号楼3603', parent:'Lisa / Joshua', note:'Jordan弟弟'},
+  {id:'S26', name:'Kayley',  school:'',       grade:'学前',   subject:'中文', rate:0, mode:'offline', address:'嘉里华亭一期2501室', parent:'Diana', dob:'', note:'4岁'},
+  {id:'S27', name:'Koki',    school:'SAS',    grade:'10年级', subject:'中文', rate:0, mode:'offline', address:'Studio', parent:'', note:'上海美国学校'},
+  {id:'S28', name:'Leighton',school:'YKPao',  grade:'二年级', subject:'中文', rate:0, mode:'offline', address:'', parent:'Alex', note:''},
+  {id:'S29', name:'Raife',   school:'',       grade:'',       subject:'英语', rate:0, mode:'offline', address:'', parent:'Alex', note:'Leighton弟弟'},
+  {id:'S30', name:'Nate',    school:'',       grade:'',       subject:'英语', rate:0, mode:'offline', address:'', parent:'Charlotte', note:''},
+  {id:'S31', name:'Oskar',   school:'',       grade:'',       subject:'中文', rate:0, mode:'offline', address:'长寿路800弄26号2601', parent:'Beryl', note:''},
+  {id:'S34', name:'Rinnie',    school:'',       grade:'成人',   subject:'中文', mode:'offline', address:'虹桥路128弄4号楼302室', parent:'', note:'Colin/Mila妈妈，Karen上课¥275/时'},
+  {id:'S35', name:'Neil',    school:'',       grade:'小学',   subject:'中文', mode:'offline', address:'虹桥路128弄4号楼302室', parent:'Rinnie / Anthony', note:'Colin弟弟，7岁'},
+  {id:'S33', name:'道宁',    school:'',       grade:'',       subject:'中文', mode:'offline', address:'', parent:'燕芳', note:''},
+  {id:'S32', name:'Sanneke', school:'',       grade:'成人',   subject:'中文', rate:0, mode:'online',  timezone:'荷兰', parent:'', note:'荷兰人，又名苏珊'},
+];
+
+// Sort students A-Z
+STUDENTS.sort((a,b) => a.name.localeCompare(b.name, 'en', {sensitivity: 'base'}));
+
+// Student rates per teacher (only visible to boss)
+const STUDENT_RATES = {
+  'S01': { // 艾生
+    'T01': {rate:295, transport:0},    // Karen
+    'T08': {rate:240, transport:50},   // Phoebe
+    'T06': {rate:240, transport:50},   // Guoqing
+  },
+  'S05': { // Alex
+    'T03': {rate:245, transport:0},    // Cici (线上)
+    'T01': {rate:275, transport:0},    // Karen (线上)
+  },
+  'S06': { // Louis
+    'T03': {rate:245, transport:0},    // Cici (线上)
+    'T01': {rate:275, transport:0},    // Karen (线上)
+  },
+  'S02': { // Colin
+    'T10': {rate:240, transport:25},   // Chris
+    'T03': {rate:240, transport:25},   // Cici
+    'T06': {rate:225, transport:25},   // Guoqing
+    'T05': {rate:225, transport:25},   // Veronica
+    'T07': {rate:225, transport:25},   // Wendy
+  },
+  'S03': { // Mila
+    'T10': {rate:240, transport:25},   // Chris
+    'T03': {rate:240, transport:25},   // Cici
+    'T06': {rate:225, transport:25},   // Guoqing
+    'T05': {rate:225, transport:25},   // Veronica
+    'T07': {rate:225, transport:25},   // Wendy
+  },
+  'S34': { // Rinnie
+    'T01': {rate:275, transport:15},   // Karen
+  },
+  'S35': { // Neil
+    'T10': {rate:240, transport:25},   // Chris (same as siblings)
+    'T03': {rate:240, transport:25},   // Cici
+    'T06': {rate:225, transport:25},   // Guoqing
+    'T05': {rate:225, transport:25},   // Veronica
+    'T07': {rate:225, transport:25},   // Wendy
+  },
+  'S13': { // Cynthia
+    'T02': {rate:275, transport:0},    // Sherry (线上)
+  },
+  'S17': { // Ellie
+    'T01': {rate:295, transport:0},    // Karen
+    'T10': {rate:235, transport:0},    // Chris
+  },
+  'S16': { // Ella
+    'T01': {rate:285, transport:42},   // Karen
+    'T07': {rate:240, transport:42},   // Wendy
+    'T02': {rate:250, transport:42},   // Sherry
+    'T10': {rate:235, transport:42},   // Chris
+  },
+};
+
+// Get student rate for specific teacher
+function getStudentRate(studentId, teacherId) {
+  const rates = STUDENT_RATES[studentId];
+  if (rates && rates[teacherId]) return rates[teacherId].rate;
+  const s = getS(studentId);
+  return s.rate || 0;
+}
+
+// Get transport fee for student+teacher combo
+function getStudentTransport(studentId, teacherId) {
+  const rates = STUDENT_RATES[studentId];
+  if (rates && rates[teacherId]) return rates[teacherId].transport;
+  return 0;
+}
+
+const SUBJECTS = ['中文','英语','数学'];
+const TIMEZONES = ['上海','香港','法国','荷兰','俄罗斯','其他'];
+const BOSS_PWD = 'karen888';
+const LOCAL_KEY = 'ktg_data_v2';
+
+// ══════════════════════════════════════════
+// FIREBASE / DEMO MODE
+// ══════════════════════════════════════════
+let db = null;
+let demoMode = false;
+let localRecords = [];
+let currentUser = null;
+
+function useDemoMode() {
+  demoMode = true;
+  const raw = localStorage.getItem(LOCAL_KEY);
+  localRecords = raw ? JSON.parse(raw) : [];
+  showLogin();
+}
+
+function saveLocal() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(localRecords));
+}
+
+function connectFirebase() {
+  const raw = document.getElementById('firebase-config-input').value.trim();
+  let config;
+  try {
+    // parse the config object
+    const cleaned = raw.replace(/^const\s+firebaseConfig\s*=\s*/, '').replace(/;\s*$/, '');
+    config = eval('(' + cleaned + ')');
+    if (!config.apiKey || !config.projectId) throw new Error('missing fields');
+  } catch(e) {
+    document.getElementById('setup-err').style.display = 'block';
+    return;
+  }
+  try {
+    firebase.initializeApp(config);
+    db = firebase.firestore();
+    // test connection
+    db.collection('_ping').doc('test').set({t: Date.now()}).then(() => {
+      localStorage.setItem('ktg_firebase_config', JSON.stringify(config));
+      showLogin();
+    }).catch(() => {
+      document.getElementById('setup-err').textContent = '连接失败，请检查 Firestore 是否已启用（测试模式）';
+      document.getElementById('setup-err').style.display = 'block';
+    });
+  } catch(e) {
+    document.getElementById('setup-err').style.display = 'block';
+  }
+}
+
+// Auto-init with hardcoded config
+const firebaseConfig = {
+  apiKey: "AIzaSyBRnFd62Hm5Gs2aslkBWV63TCh2nt755Rw",
+  authDomain: "karen-teachinggroup.firebaseapp.com",
+  databaseURL: "https://karen-teachinggroup-default-rtdb.firebaseio.com",
+  projectId: "karen-teachinggroup",
+  storageBucket: "karen-teachinggroup.firebasestorage.app",
+  messagingSenderId: "956950920776",
+  appId: "1:956950920776:web:4a6dc55fd334c96812e27d",
+  measurementId: "G-5JWFSLD8WK"
+};
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} catch(e) { console.log('Firebase init:', e); }
+
+window.addEventListener('load', () => {
+  initTeacherOpts();
+});
+
+function showLogin() {
+  document.getElementById('firebase-setup').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  initTeacherOpts();
+  if (demoMode) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);color:var(--gold2);border-radius:8px;padding:9px 14px;font-size:12px;margin-top:12px;text-align:center;';
+    warn.textContent = '演示模式：数据仅存本机，不会同步';
+    document.querySelector('.login-card').appendChild(warn);
+  }
+}
+
+function initTeacherOpts() {
+  const grp = document.getElementById('teacher-opts');
+  grp.innerHTML = TEACHERS.map(t =>
+    `<option value="teacher_${t.id}">${t.name}</option>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════
+function doLogin() {
+  const role = document.getElementById('login-role').value;
+  const pwd  = document.getElementById('login-pwd').value.trim();
+  const err  = document.getElementById('login-err');
+  err.style.display = 'none';
+  if (!role || !pwd) { err.textContent='请选择身份并输入密码'; err.style.display='block'; return; }
+  if (role === 'boss') {
+    if (pwd !== BOSS_PWD) { err.textContent='密码错误'; err.style.display='block'; return; }
+    currentUser = {role:'boss', id:'boss', name:'Karen'};
+    launchApp();
+    return;
+  }
+  const tid = role.replace('teacher_','');
+  const t = TEACHERS.find(x=>x.id===tid);
+  if (!t) { err.textContent='请选择正确身份'; err.style.display='block'; return; }
+  if (pwd !== t.pwd) { err.textContent='密码错误'; err.style.display='block'; return; }
+  currentUser = {role:'teacher', id:t.id, name:t.name};
+  launchApp();
+}
+document.addEventListener('keydown', e => { if(e.key==='Enter' && document.getElementById('login-screen').style.display==='flex') doLogin(); });
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pwd').value = '';
+  document.getElementById('login-role').value = '';
+}
+
+// Karen role selector removed - Karen logs in as teacher
+
+function launchApp() {
+  document.getElementById('firebase-setup').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  app.style.flexDirection = 'column';
+  app.style.minHeight = '100vh';
+  if (currentUser.role === 'boss') {
+    document.getElementById('topbar-role').textContent = currentUser.name ? currentUser.name + ' · 管理员' : '管理员';
+    renderBoss();
+  } else {
+    renderTeacher();
+  }
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+const fmt = n => '¥' + Number(n||0).toLocaleString('zh-CN',{maximumFractionDigits:0});
+const uid = () => 'R' + Date.now() + Math.floor(Math.random()*9999);
+const getT = id => TEACHERS.find(t=>t.id===id)||{};
+const getS = id => STUDENTS.find(s=>s.id===id)||{};
+
+function monthPicker(y, m, fn) {
+  let opts = '';
+  for(let yr=2025;yr<=2027;yr++) for(let mo=1;mo<=12;mo++)
+    opts += `<option value="${yr}-${mo}" ${yr===y&&mo===m?'selected':''} >${yr}年${mo}月</option>`;
+  return `<div class="month-bar"><label>📅 查询月份</label><select onchange="${fn}(this.value)">${opts}</select></div>`;
+}
+
+let _year = new Date().getFullYear();
+let _month = new Date().getMonth()+1;
+function setMonth(val) { const [y,m]=val.split('-').map(Number); _year=y; _month=m; }
+
+function filterRecs(recs, y, m, tid, sid) {
+  return recs.filter(r => {
+    if (!r.date) return false;
+    const [ry,rm] = r.date.split('-').map(Number);
+    if (ry!==y || rm!==m) return false;
+    if (tid && r.teacherId!==tid) return false;
+    if (sid && r.studentId!==sid) return false;
+    return true;
+  });
+}
+
+function setTabs(arr) {
+  window._tabs = arr;
+  document.getElementById('tabs').innerHTML = arr.map((t,i) =>
+    `<div class="tab ${i===0?'active':''}" onclick="switchTab(${i})">${t.icon} ${t.label}</div>`
+  ).join('');
+  renderTab(0);
+}
+function switchTab(i) {
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  renderTab(i);
+}
+function renderTab(i) { window._tabs[i].fn(); }
+
+// ══════════════════════════════════════════
+// FIRESTORE CRUD
+// ══════════════════════════════════════════
+async function getRecords() {
+  if (demoMode) return localRecords;
+  try {
+    const timeout = new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 5000));
+    const fetch = db.collection('records').orderBy('date','desc').get();
+    const snap = await Promise.race([fetch, timeout]);
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e) {
+    console.log('getRecords error:', e.message);
+    return [];
+  }
+}
+
+async function addRecord(rec) {
+  if (demoMode) {
+    rec.id = uid();
+    localRecords.push(rec);
+    saveLocal();
+    return;
+  }
+  try {
+    const timeout = new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 8000));
+    await Promise.race([db.collection('records').add(rec), timeout]);
+  } catch(e) {
+    throw new Error('保存失败，请检查网络连接（需要VPN）');
+  }
+}
+
+async function deleteRecord(id) {
+  if (demoMode) {
+    localRecords = localRecords.filter(r=>r.id!==id);
+    saveLocal();
+    return;
+  }
+  try {
+    await db.collection('records').doc(id).delete();
+  } catch(e) {
+    throw new Error('删除失败，请检查网络');
+  }
+}
+
+// ══════════════════════════════════════════
+// BOSS
+// ══════════════════════════════════════════
+function renderBoss() {
+  setTabs([
+    {icon:'📊', label:'总览',     fn: bossDashboard},
+    {icon:'📅', label:'上课记录', fn: bossRecords},
+    {icon:'💰', label:'学费账户', fn: bossFeeAccounts},
+    {icon:'🏖️', label:'学生请假', fn: bossAbsence},
+    {icon:'💵', label:'老师工资', fn: bossTeacherSalary},
+    {icon:'📈', label:'收费汇总', fn: bossStudentFees},
+    {icon:'⭐', label:'经验值',   fn: bossXP},
+    {icon:'👥', label:'学生档案', fn: bossStudents},
+    {icon:'⚙️', label:'设置',     fn: bossSettings},
+  ]);
+}
+
+async function bossDashboard() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+  const recs = filterRecs(all, _year, _month);
+  let income=0, salary=0, hours=0;
+  recs.forEach(r=>{ const t=getT(r.teacherId),s=getS(r.studentId); salary+=(t.rate||0)*r.hours; income+=(s.rate||0)*r.hours; hours+=r.hours; });
+  const profit = income - salary;
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">财务总览</div>
+    <div class="pg-sub">实时数据 · ${demoMode?'<span style="color:var(--red)">演示模式</span>':`<span style="color:var(--green)">已连接云端</span>`}</div>
+    ${monthPicker(_year,_month,'bossMonthChange')}
+    <div class="stat-grid">
+      <div class="stat-tile t-gold"><div class="stat-label">应收学费</div><div class="stat-val">${fmt(income)}</div><div class="stat-sub">${recs.length} 次课</div></div>
+      <div class="stat-tile t-green"><div class="stat-label">应发工资</div><div class="stat-val">${fmt(salary)}</div><div class="stat-sub">${hours.toFixed(1)} 课时</div></div>
+      <div class="stat-tile t-navy"><div class="stat-label">税前利润</div><div class="stat-val" style="color:${profit>=0?'var(--green)':`var(--red)`}">${fmt(profit)}</div></div>
+      <div class="stat-tile t-gold"><div class="stat-label">上课总时数</div><div class="stat-val">${hours.toFixed(1)}<span class="stat-unit"> 时</span></div></div>
+    </div>
+    <div class="card"><div class="card-title">收支明细</div>
+      <div class="sum-row"><span class="sum-label">📥 应收学费</span><span class="sum-amt gold">${fmt(income)}</span></div>
+      <div class="sum-row"><span class="sum-label">📤 应发工资</span><span class="sum-amt red">${fmt(salary)}</span></div>
+      <hr class="divider">
+      <div class="sum-row"><span class="sum-label" style="font-weight:700">💰 税前利润</span><span class="sum-amt ${profit>=0?'green':'red'}" style="font-size:19px">${fmt(profit)}</span></div>
+    </div>`;
+}
+window.bossMonthChange = v => { setMonth(v); bossDashboard(); };
+
+async function bossRecords() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+  const sortBy = window._recSortBy || 'date';
+  let recs = filterRecs(all, _year, _month);
+  if (sortBy === 'date') recs = recs.sort((a,b)=>b.date.localeCompare(a.date));
+  else if (sortBy === 'teacher') recs = recs.sort((a,b)=>(getT(a.teacherId).name||'').localeCompare(getT(b.teacherId).name||''));
+  const rows = recs.length ? recs.map(r => {
+    const t=getT(r.teacherId), s=getS(r.studentId);
+    const sal=(t.rate||0)*r.hours, inc=(s.rate||0)*r.hours;
+    const modeTag = r.mode==='online' ? `<span class="mode-online">🌐 线上</span>` : `<span class="mode-offline">📍 线下</span>`;
+    return `<tr>
+      <td>${r.date?r.date.slice(5):''}</td>
+      <td>${t.name||'-'}</td>
+      <td>${s.name||'-'}</td>
+      <td><span class="badge badge-navy">${r.subject||'中文'}</span></td>
+      <td style="text-align:center">${r.hours}</td>
+      <td>${modeTag}</td>
+      <td style="color:var(--red);font-weight:600">${fmt(sal)}</td>
+      <td style="color:var(--green);font-weight:600">${fmt(inc)}</td>
+      <td><button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);padding:5px 10px;" onclick="bossDelRec('${r.id}')">删除</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📭</div><div>本月暂无记录</div></div></td></tr>`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">上课记录</div>
+    <div class="pg-sub">所有老师的记录，管理员专属</div>
+    ${monthPicker(_year,_month,'bossRecMonthChange')}
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn btn-block" style="${window._recSortBy==='teacher'?'background:var(--navy);color:#fff':'background:var(--bg);color:var(--text)'}" onclick="window._recSortBy='teacher';bossRecords()">按老师排列</button>
+      <button class="btn btn-block" style="${!window._recSortBy||window._recSortBy==='date'?'background:var(--navy);color:#fff':'background:var(--bg);color:var(--text)'}" onclick="window._recSortBy='date';bossRecords()">按日期排列</button>
+    </div>
+    <button class="btn btn-gold btn-block" style="margin-bottom:14px" onclick="showAddRecord()">＋ 添加上课记录</button>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>日期</th><th>时间</th><th>老师</th><th>学生</th><th>科目</th><th>课时</th><th>方式</th><th>交通</th><th>材料</th><th>应付</th><th>应收</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+window.bossRecMonthChange = v => { setMonth(v); bossRecords(); };
+window.bossDelRec = async id => {
+  if (!confirm('确认删除？')) return;
+  await deleteRecord(id);
+  bossRecords();
+};
+
+async function bossFeeAccounts() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+
+  // Get all transactions from Firebase
+  let transactions = [];
+  if (!demoMode) {
+    const snap = await db.collection('transactions').orderBy('date','desc').get();
+    transactions = snap.docs.map(d=>({id:d.id,...d.data()}));
+  }
+
+  const rows = STUDENTS.map(s => {
+    const myRecs = all.filter(r=>r.studentId===s.id);
+    const usedHours = myRecs.reduce((a,r)=>a+r.hours,0);
+    const myTxns = transactions.filter(t=>t.studentId===s.id);
+    const topupHours = myTxns.filter(t=>t.type==='topup').reduce((a,t)=>a+(t.hours||0),0);
+    const materialFees = myTxns.filter(t=>t.type==='material').reduce((a,t)=>a+(t.amount||0),0);
+    const remainHours = topupHours - usedHours;
+    const rate = s.rate||0;
+    const remainAmt = remainHours * rate;
+    const statusColor = remainHours < 2 ? 'var(--red)' : remainHours < 6 ? '#a06800' : 'var(--green)';
+    return `<tr onclick="showStudentAccount('${s.id}')" style="cursor:pointer">
+      <td><span style="font-weight:700">${s.name}</span></td>
+      <td style="text-align:center;color:var(--navy)">${topupHours.toFixed(1)}</td>
+      <td style="text-align:center;color:var(--red)">${usedHours.toFixed(1)}</td>
+      <td style="text-align:center;font-weight:700;color:${statusColor}">${remainHours.toFixed(1)}</td>
+      <td style="text-align:right;font-weight:700;color:${statusColor}">${fmt(remainAmt)}</td>
+      <td style="text-align:right;color:var(--muted)">${materialFees>0?fmt(materialFees):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">学费账户</div>
+    <div class="pg-sub">每位学生的充值余额与消费记录</div>
+    <div class="alert alert-warn">⚠️ 此页面仅 Karen 可见</div>
+    <button class="btn btn-gold btn-block" style="margin-bottom:14px" onclick="showTopupModal()">＋ 录入充值 / 材料费</button>
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>学生</th>
+        <th style="text-align:center">已充课时</th>
+        <th style="text-align:center">已用课时</th>
+        <th style="text-align:center">剩余课时</th>
+        <th style="text-align:right">剩余金额</th>
+        <th style="text-align:right">材料费</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>
+    <div class="alert alert-info">💡 点击学生姓名查看详细记录</div>`;
+}
+
+function showTopupModal() {
+  const stuOpts = STUDENTS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-title">录入充值 / 材料费</div>
+    <div class="form-group"><label>学生</label><select class="form-control" id="tp-student">${stuOpts}</select></div>
+    <div class="form-group"><label>类型</label>
+      <select class="form-control" id="tp-type" onchange="tpTypeChange()">
+        <option value="topup24">充值 24小时包</option>
+        <option value="topup36">充值 36小时包</option>
+        <option value="topupCustom">充值 自定义金额</option>
+        <option value="material">材料费</option>
+      </select>
+    </div>
+    <div class="form-group cond-field show" id="tp-hours-field"><label>课时数（小时）</label>
+      <input type="number" class="form-control" id="tp-hours" value="24" step="0.5" min="1">
+    </div>
+    <div class="form-group cond-field show" id="tp-amt-field"><label>金额（元）</label>
+      <input type="number" class="form-control" id="tp-amount" placeholder="自动计算或手动输入" step="1" min="0">
+    </div>
+    <div class="form-group cond-field" id="tp-mat-field"><label>材料费金额（元）</label>
+      <input type="number" class="form-control" id="tp-matamt" placeholder="输入金额" step="1" min="0">
+    </div>
+    <div class="form-group"><label>日期</label><input type="date" class="form-control" id="tp-date" value="${today}"></div>
+    <div class="form-group"><label>备注</label><input type="text" class="form-control" id="tp-note" placeholder="可选"></div>
+    <button class="btn btn-gold btn-block" onclick="saveTopup()">确认录入</button>
+  `;
+  document.getElementById('modal-bg').classList.add('open');
+  tpTypeChange();
+}
+
+window.tpTypeChange = function() {
+  const t = document.getElementById('tp-type').value;
+  const hoursField = document.getElementById('tp-hours-field');
+  const amtField = document.getElementById('tp-amt-field');
+  const matField = document.getElementById('tp-mat-field');
+  const hoursInput = document.getElementById('tp-hours');
+  const amtInput = document.getElementById('tp-amount');
+
+  if (t==='topup24') {
+    hoursField.classList.add('show'); amtField.classList.add('show'); matField.classList.remove('show');
+    hoursInput.value=24;
+  } else if (t==='topup36') {
+    hoursField.classList.add('show'); amtField.classList.add('show'); matField.classList.remove('show');
+    hoursInput.value=36;
+  } else if (t==='topupCustom') {
+    hoursField.classList.add('show'); amtField.classList.add('show'); matField.classList.remove('show');
+    hoursInput.value='';
+  } else {
+    hoursField.classList.remove('show'); amtField.classList.remove('show'); matField.classList.add('show');
+  }
+};
+
+window.saveTopup = async function() {
+  const sid    = document.getElementById('tp-student').value;
+  const type   = document.getElementById('tp-type').value;
+  const date   = document.getElementById('tp-date').value;
+  const note   = document.getElementById('tp-note').value;
+  const btn    = document.querySelector('#modal-body .btn-gold');
+
+  let txn = {studentId:sid, date, note, createdAt:Date.now()};
+
+  if (type==='material') {
+    const amt = parseFloat(document.getElementById('tp-matamt').value)||0;
+    if (!amt) { alert('请输入材料费金额'); return; }
+    txn = {...txn, type:'material', amount:amt};
+  } else {
+    const hours = parseFloat(document.getElementById('tp-hours').value)||0;
+    const amount = parseFloat(document.getElementById('tp-amount').value)||0;
+    if (!hours) { alert('请输入课时数'); return; }
+    txn = {...txn, type:'topup', hours, amount};
+  }
+
+  btn.textContent='保存中...'; btn.disabled=true;
+  if (!demoMode) await db.collection('transactions').add(txn);
+  closeModal();
+  bossFeeAccounts();
+};
+
+window.showStudentAccount = async function(sid) {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const s = getS(sid);
+  const all = await getRecords();
+  const myRecs = all.filter(r=>r.studentId===sid).sort((a,b)=>b.date.localeCompare(a.date));
+
+  let transactions = [];
+  if (!demoMode) {
+    const snap = await db.collection('transactions').where('studentId','==',sid).orderBy('date','desc').get();
+    transactions = snap.docs.map(d=>({id:d.id,...d.data()}));
+  }
+
+  const usedHours = myRecs.reduce((a,r)=>a+r.hours,0);
+  const topupHours = transactions.filter(t=>t.type==='topup').reduce((a,t)=>a+(t.hours||0),0);
+  const materialFees = transactions.filter(t=>t.type==='material').reduce((a,t)=>a+(t.amount||0),0);
+  const remainHours = topupHours - usedHours;
+  const rate = s.rate||0;
+
+  const txnRows = transactions.map(t=> `<tr>
+    <td>${t.date?t.date.slice(5):'—'}</td>
+    <td>${t.type==='topup'?'💳 充值':'📦 材料费'}</td>
+    <td style="color:var(--green);font-weight:700">+${t.type==='topup'?t.hours+'时':fmt(t.amount)}</td>
+    <td style="font-size:12px;color:var(--muted)">${t.note||'—'}</td>
+    <td><button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);padding:4px 8px" onclick="deleteTxn('${t.id}')">🗑</button></td>
+  </tr>`).join('');
+
+  const recRows = myRecs.slice(0,10).map(r=> `<tr>
+    <td>${r.date?r.date.slice(5):'—'}</td>
+    <td>${getT(r.teacherId).name||'—'}</td>
+    <td style="text-align:center">${r.hours}时</td>
+    <td style="text-align:right;color:var(--red)">-${fmt(r.hours*rate)}</td>
+  </tr>`).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <button class="btn btn-outline btn-sm" onclick="bossFeeAccounts()">← 返回</button>
+      <div class="pg-head" style="margin:0">${s.name} 的账户</div>
+    </div>
+    <div class="pg-sub">单价：${rate?fmt(rate)+'/时':'未设置'}</div>
+    <div class="stat-grid">
+      <div class="stat-tile t-navy"><div class="stat-label">已充课时</div><div class="stat-val">${topupHours.toFixed(1)}<span class="stat-unit">时</span></div></div>
+      <div class="stat-tile ${remainHours<2?'t-red':'t-green'}"><div class="stat-label">剩余课时</div><div class="stat-val">${remainHours.toFixed(1)}<span class="stat-unit">时</span></div></div>
+      <div class="stat-tile t-gold"><div class="stat-label">剩余金额</div><div class="stat-val" style="font-size:18px">${fmt(remainHours*rate)}</div></div>
+      <div class="stat-tile t-navy"><div class="stat-label">材料费合计</div><div class="stat-val" style="font-size:18px">${fmt(materialFees)}</div></div>
+    </div>
+    ${txnRows?`<div class="card" style="padding:0;overflow:hidden"><div class="card-title" style="padding:14px 14px 0">充值记录</div><div class="tbl-wrap"><table>
+      <thead><tr><th>日期</th><th>类型</th><th>金额/课时</th><th>备注</th><th></th></tr></thead>
+      <tbody>${txnRows}</tbody>
+    </table></div></div>`:''}
+    ${recRows?`<div class="card" style="padding:0;overflow:hidden"><div class="card-title" style="padding:14px 14px 0">近期上课（扣费）</div><div class="tbl-wrap"><table>
+      <thead><tr><th>日期</th><th>老师</th><th>课时</th><th style="text-align:right">扣费</th></tr></thead>
+      <tbody>${recRows}</tbody>
+    </table></div></div>`:''}
+    <button class="btn btn-gold btn-block" onclick="showTopupModal()">＋ 录入充值 / 材料费</button>`;
+};
+
+window.deleteTxn = async function(id) {
+  if (!confirm('确认删除这条记录？')) return;
+  if (!demoMode) await db.collection('transactions').doc(id).delete();
+  // refresh
+  bossFeeAccounts();
+};
+
+async function bossStudentFees() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+  const recs = filterRecs(all, _year, _month);
+  const rows = STUDENTS.map(s => {
+    const sr = recs.filter(r=>r.studentId===s.id);
+    const h = sr.reduce((a,r)=>a+r.hours,0);
+    const fee = h * (s.rate||0);
+    if (!h) return '';
+    return `<tr>
+      <td><span style="font-weight:700">${s.name}</span>${s.grade?`<br><span style="font-size:11px;color:var(--muted)">${s.grade}</span>`:''}</td>
+      <td><span class="badge badge-navy">${s.subject}</span></td>
+      <td style="text-align:center">${h.toFixed(1)}</td>
+      <td style="text-align:right;font-weight:700;color:var(--red)">${fmt(fee)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4"><div class="empty"><div class="empty-icon">📭</div><div>本月暂无收费记录</div></div></td></tr>`;
+
+  const total = STUDENTS.reduce((a,s)=>{ const sr=recs.filter(r=>r.studentId===s.id); return a+sr.reduce((b,r)=>b+r.hours*(s.rate||0),0); },0);
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">学生收费</div>
+    <div class="pg-sub">仅管理员可见 · 老师无法查看学费</div>
+    ${monthPicker(_year,_month,'bossFeesMonthChange')}
+    <div class="alert alert-warn">⚠️ 此页面仅 Karen 可见</div>
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr><th>学生</th><th>科目</th><th style="text-align:center">课时</th><th style="text-align:right">应收</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>
+    <div class="card"><div class="sum-row"><span style="font-weight:700">本月应收合计</span><span class="sum-amt gold" style="font-size:19px">${fmt(total)}</span></div></div>`;
+}
+window.bossFeesMonthChange = v => { setMonth(v); bossStudentFees(); };
+
+async function bossTeacherSalary() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+  const recs = filterRecs(all, _year, _month);
+  const rows = TEACHERS.map(t => {
+    const tr = recs.filter(r=>r.teacherId===t.id);
+    const h = tr.reduce((a,r)=>a+r.hours,0);
+    const sal = tr.reduce((a,r)=>a+getEffectiveRate(t,r.subject,r.mode)*r.hours+(r.transport||0)+(r.material||0),0);
+    return `<tr>
+      <td><span style="font-weight:700">${t.name}</span></td>
+      <td style="text-align:center">${h.toFixed(1)}</td>
+      <td style="text-align:right;font-weight:700;color:var(--green)">${fmt(sal)}</td>
+    </tr>`;
+  }).join('');
+  const total = TEACHERS.reduce((a,t)=>{ const tr=recs.filter(r=>r.teacherId===t.id); return a+tr.reduce((b,r)=>b+r.hours*(t.rate||0),0); },0);
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">老师工资</div>
+    <div class="pg-sub">仅管理员可见 · 老师之间无法互查</div>
+    ${monthPicker(_year,_month,'bossSalMonthChange')}
+    <div class="alert alert-warn">⚠️ 此页面仅 Karen 可见</div>
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr><th>老师</th><th style="text-align:center">课时</th><th style="text-align:right">应发工资</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>
+    <div class="card"><div class="sum-row"><span style="font-weight:700">本月应发合计</span><span class="sum-amt green" style="font-size:19px">${fmt(total)}</span></div></div>`;
+}
+window.bossSalMonthChange = v => { setMonth(v); bossTeacherSalary(); };
+
+async function bossXP() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+
+  const rows = TEACHERS.map(t => {
+    const myRecs = all.filter(r => r.teacherId === t.id);
+    const earnedXP = myRecs.reduce((a,r) => a + (r.hours||0), 0);
+    const totalXP = (t.historyXP||0) + earnedXP;
+    const level = totalXP >= 1000 ? '🏆 大师' : totalXP >= 500 ? '🥇 专家' : totalXP >= 200 ? '🥈 熟练' : totalXP >= 50 ? '🥉 进阶' : '🌱 新手';
+    const pct = Math.min(100, (totalXP % 200) / 200 * 100);
+    return `<tr>
+      <td><span style="font-weight:700">${t.name}</span></td>
+      <td style="text-align:center;color:var(--muted);font-size:12px">${(t.historyXP||0).toFixed(2)}</td>
+      <td style="text-align:center;color:var(--navy)">${earnedXP.toFixed(2)}</td>
+      <td style="text-align:center;font-weight:700;color:var(--gold)">${totalXP.toFixed(2)}</td>
+      <td>${level}</td>
+      <td style="min-width:80px">
+        <div style="background:var(--border);border-radius:20px;height:8px;overflow:hidden">
+          <div style="background:var(--gold);height:100%;width:${pct}%;border-radius:20px;transition:width 0.3s"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const totalAllXP = TEACHERS.reduce((a,t) => {
+    const myRecs = all.filter(r => r.teacherId === t.id);
+    return a + (t.historyXP||0) + myRecs.reduce((b,r) => b+(r.hours||0), 0);
+  }, 0);
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">经验值排行</div>
+    <div class="pg-sub">1小时课程 = 1经验值 · 历史数据截至2025年4月底</div>
+    <div class="alert alert-info">ℹ️ 历史经验值已导入，系统上线后的课时自动累加</div>
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>老师</th>
+        <th style="text-align:center">历史经验值</th>
+        <th style="text-align:center">系统累积</th>
+        <th style="text-align:center">总经验值</th>
+        <th>等级</th>
+        <th>进度</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>
+    <div class="card">
+      <div class="card-title">等级说明</div>
+      <div class="sum-row"><span>🌱 新手</span><span style="color:var(--muted)">0 - 50 小时</span></div>
+      <div class="sum-row"><span>🥉 进阶</span><span style="color:var(--muted)">50 - 200 小时</span></div>
+      <div class="sum-row"><span>🥈 熟练</span><span style="color:var(--muted)">200 - 500 小时</span></div>
+      <div class="sum-row"><span>🥇 专家</span><span style="color:var(--muted)">500 - 1000 小时</span></div>
+      <div class="sum-row"><span>🏆 大师</span><span style="color:var(--muted)">1000+ 小时</span></div>
+    </div>`;
+}
+
+function bossStudents() {
+  const rows = STUDENTS.map(s => `
+    <tr>
+      <td><span style="font-weight:700">${s.name}</span>${s.note?`<br><span style="font-size:11px;color:var(--muted)">${s.note}</span>`:''}</td>
+      <td>${s.grade||'—'}</td>
+      <td>${s.school||'—'}</td>
+      <td><span class="badge badge-navy">${s.subject}</span></td>
+      <td>${s.mode==='online'?`<span class="badge badge-online">🌐 ${s.timezone}</span>`:`<span class="badge badge-green">📍线下</span>`}</td>
+      <td style="font-size:12px;color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.address||s.timezone||'—'}</td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">学生档案</div>
+    <div class="pg-sub">共 ${STUDENTS.length} 位学生</div>
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr><th>姓名</th><th>年级</th><th>学校</th><th>科目</th><th>方式</th><th>地址/时区</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+
+function bossSettings() {
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">系统设置</div>
+    <div class="pg-sub">管理员密码与系统配置</div>
+    <div class="card">
+      <div class="card-title">修改老板密码</div>
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" class="form-control" id="boss-new-pwd" placeholder="输入新密码（至少4位）">
+      </div>
+      <div class="form-group">
+        <label>确认新密码</label>
+        <input type="password" class="form-control" id="boss-confirm-pwd" placeholder="再输入一次">
+      </div>
+      <button class="btn btn-gold btn-block" onclick="bossSavePwd()">保存新密码</button>
+      <div id="boss-pwd-msg" style="margin-top:10px;font-size:13px;display:none"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">老师课时费</div>
+      <div class="alert alert-success">✅ 所有老师课时费已设置，Sherry和Cici支持多费率自动计算</div>
+      ${TEACHERS.map(t=>`<div class="sum-row"><span>${t.name}</span><span style="font-weight:700">${t.rate?fmt(t.rate)+'/时':'<span style=\"color:var(--muted)\">未设置</span>'}</span></div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">学生收费标准（待设置）</div>
+      <div class="alert alert-info">ℹ️ 学生收费标准需设置后才能计算收费总额。</div>
+      ${STUDENTS.map(s=>`<div class="sum-row"><span>${s.name}</span><span style="font-weight:700">${s.rate?fmt(s.rate)+'/时':'<span style=\"color:var(--muted)\">未设置</span>'}</span></div>`).join('')}
+    </div>
+    ${demoMode?'<div class="alert alert-warn">⚠️ 演示模式：数据不会同步到云端。<br>请刷新页面并输入 Firebase 配置以启用云端同步。</div>':'<div class="alert alert-success">✅ 已连接 Firebase 云端数据库</div>'}`;
+}
+
+// ══════════════════════════════════════════
+// ADD RECORD MODAL
+// ══════════════════════════════════════════
+function showAddRecord(preTeacherId) {
+  const teacherOpts = TEACHERS.map(t=>`<option value="${t.id}" ${preTeacherId===t.id?'selected':''} >${t.name}</option>`).join('');
+  const stuOpts = STUDENTS.map(s=>`<option value="${s.id}">${s.name}${s.grade?' ('+s.grade+')':''}</option>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-title">添加上课记录</div>
+    <div class="form-row">
+      <div class="form-group"><label>日期</label><input type="date" class="form-control" id="m-date" value="${today}"></div>
+      <div class="form-group"><label>开始时间</label><select class="form-control" id="m-starttime"><option value="07:00">07:00</option>
+<option value="07:05">07:05</option>
+<option value="07:10">07:10</option>
+<option value="07:15">07:15</option>
+<option value="07:20">07:20</option>
+<option value="07:25">07:25</option>
+<option value="07:30">07:30</option>
+<option value="07:35">07:35</option>
+<option value="07:40">07:40</option>
+<option value="07:45">07:45</option>
+<option value="07:50">07:50</option>
+<option value="07:55">07:55</option>
+<option value="08:00">08:00</option>
+<option value="08:05">08:05</option>
+<option value="08:10">08:10</option>
+<option value="08:15">08:15</option>
+<option value="08:20">08:20</option>
+<option value="08:25">08:25</option>
+<option value="08:30">08:30</option>
+<option value="08:35">08:35</option>
+<option value="08:40">08:40</option>
+<option value="08:45">08:45</option>
+<option value="08:50">08:50</option>
+<option value="08:55">08:55</option>
+<option value="09:00">09:00</option>
+<option value="09:05">09:05</option>
+<option value="09:10">09:10</option>
+<option value="09:15">09:15</option>
+<option value="09:20">09:20</option>
+<option value="09:25">09:25</option>
+<option value="09:30">09:30</option>
+<option value="09:35">09:35</option>
+<option value="09:40">09:40</option>
+<option value="09:45">09:45</option>
+<option value="09:50">09:50</option>
+<option value="09:55">09:55</option>
+<option value="10:00">10:00</option>
+<option value="10:05">10:05</option>
+<option value="10:10">10:10</option>
+<option value="10:15">10:15</option>
+<option value="10:20">10:20</option>
+<option value="10:25">10:25</option>
+<option value="10:30">10:30</option>
+<option value="10:35">10:35</option>
+<option value="10:40">10:40</option>
+<option value="10:45">10:45</option>
+<option value="10:50">10:50</option>
+<option value="10:55">10:55</option>
+<option value="11:00">11:00</option>
+<option value="11:05">11:05</option>
+<option value="11:10">11:10</option>
+<option value="11:15">11:15</option>
+<option value="11:20">11:20</option>
+<option value="11:25">11:25</option>
+<option value="11:30">11:30</option>
+<option value="11:35">11:35</option>
+<option value="11:40">11:40</option>
+<option value="11:45">11:45</option>
+<option value="11:50">11:50</option>
+<option value="11:55">11:55</option>
+<option value="12:00">12:00</option>
+<option value="12:05">12:05</option>
+<option value="12:10">12:10</option>
+<option value="12:15">12:15</option>
+<option value="12:20">12:20</option>
+<option value="12:25">12:25</option>
+<option value="12:30">12:30</option>
+<option value="12:35">12:35</option>
+<option value="12:40">12:40</option>
+<option value="12:45">12:45</option>
+<option value="12:50">12:50</option>
+<option value="12:55">12:55</option>
+<option value="13:00">13:00</option>
+<option value="13:05">13:05</option>
+<option value="13:10">13:10</option>
+<option value="13:15">13:15</option>
+<option value="13:20">13:20</option>
+<option value="13:25">13:25</option>
+<option value="13:30">13:30</option>
+<option value="13:35">13:35</option>
+<option value="13:40">13:40</option>
+<option value="13:45">13:45</option>
+<option value="13:50">13:50</option>
+<option value="13:55">13:55</option>
+<option value="14:00">14:00</option>
+<option value="14:05">14:05</option>
+<option value="14:10">14:10</option>
+<option value="14:15">14:15</option>
+<option value="14:20">14:20</option>
+<option value="14:25">14:25</option>
+<option value="14:30">14:30</option>
+<option value="14:35">14:35</option>
+<option value="14:40">14:40</option>
+<option value="14:45">14:45</option>
+<option value="14:50">14:50</option>
+<option value="14:55">14:55</option>
+<option value="15:00">15:00</option>
+<option value="15:05">15:05</option>
+<option value="15:10">15:10</option>
+<option value="15:15">15:15</option>
+<option value="15:20">15:20</option>
+<option value="15:25">15:25</option>
+<option value="15:30">15:30</option>
+<option value="15:35">15:35</option>
+<option value="15:40">15:40</option>
+<option value="15:45">15:45</option>
+<option value="15:50">15:50</option>
+<option value="15:55">15:55</option>
+<option value="16:00">16:00</option>
+<option value="16:05">16:05</option>
+<option value="16:10">16:10</option>
+<option value="16:15">16:15</option>
+<option value="16:20">16:20</option>
+<option value="16:25">16:25</option>
+<option value="16:30">16:30</option>
+<option value="16:35">16:35</option>
+<option value="16:40">16:40</option>
+<option value="16:45">16:45</option>
+<option value="16:50">16:50</option>
+<option value="16:55">16:55</option>
+<option value="17:00">17:00</option>
+<option value="17:05">17:05</option>
+<option value="17:10">17:10</option>
+<option value="17:15">17:15</option>
+<option value="17:20">17:20</option>
+<option value="17:25">17:25</option>
+<option value="17:30">17:30</option>
+<option value="17:35">17:35</option>
+<option value="17:40">17:40</option>
+<option value="17:45">17:45</option>
+<option value="17:50">17:50</option>
+<option value="17:55">17:55</option>
+<option value="18:00">18:00</option>
+<option value="18:05">18:05</option>
+<option value="18:10">18:10</option>
+<option value="18:15">18:15</option>
+<option value="18:20">18:20</option>
+<option value="18:25">18:25</option>
+<option value="18:30">18:30</option>
+<option value="18:35">18:35</option>
+<option value="18:40">18:40</option>
+<option value="18:45">18:45</option>
+<option value="18:50">18:50</option>
+<option value="18:55">18:55</option>
+<option value="19:00">19:00</option>
+<option value="19:05">19:05</option>
+<option value="19:10">19:10</option>
+<option value="19:15">19:15</option>
+<option value="19:20">19:20</option>
+<option value="19:25">19:25</option>
+<option value="19:30">19:30</option>
+<option value="19:35">19:35</option>
+<option value="19:40">19:40</option>
+<option value="19:45">19:45</option>
+<option value="19:50">19:50</option>
+<option value="19:55">19:55</option>
+<option value="20:00">20:00</option>
+<option value="20:05">20:05</option>
+<option value="20:10">20:10</option>
+<option value="20:15">20:15</option>
+<option value="20:20">20:20</option>
+<option value="20:25">20:25</option>
+<option value="20:30">20:30</option>
+<option value="20:35">20:35</option>
+<option value="20:40">20:40</option>
+<option value="20:45">20:45</option>
+<option value="20:50">20:50</option>
+<option value="20:55">20:55</option>
+<option value="21:00">21:00</option>
+<option value="21:05">21:05</option>
+<option value="21:10">21:10</option>
+<option value="21:15">21:15</option>
+<option value="21:20">21:20</option>
+<option value="21:25">21:25</option>
+<option value="21:30">21:30</option>
+<option value="21:35">21:35</option>
+<option value="21:40">21:40</option>
+<option value="21:45">21:45</option>
+<option value="21:50">21:50</option>
+<option value="21:55">21:55</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>老师</label><select class="form-control" id="m-teacher">${teacherOpts}</select></div>
+      <div class="form-group"><label>学生</label><select class="form-control" id="m-student" onchange="onStudentChange()">${stuOpts}</select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>科目</label>
+        <select class="form-control" id="m-subject">
+          ${SUBJECTS.map(s=>`<option value="${s}">${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>课时（小时）</label><input type="number" class="form-control" id="m-hours" value="2" step="0.01" min="0.25" max="12"></div>
+    </div>
+    <div class="form-group"><label>上课方式</label>
+      <select class="form-control" id="m-mode" onchange="onModeChange()">
+        <option value="offline">📍 线下课</option>
+        <option value="online">🌐 线上课</option>
+      </select>
+    </div>
+    <div class="form-group cond-field" id="field-tz"><label>时区</label>
+      <select class="form-control" id="m-tz">${TIMEZONES.map(z=>`<option>${z}</option>`).join('')}</select>
+    </div>
+    <div class="form-group cond-field show" id="field-addr"><label>上课地址</label>
+      <input type="text" class="form-control" id="m-addr" placeholder="自动填入或手动输入">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>交通补贴（元）</label><input type="number" class="form-control" id="m-transport" placeholder="0" step="1" min="0" value="0"></div>
+      <div class="form-group"><label>材料费（元）</label><input type="number" class="form-control" id="m-material" placeholder="0" step="1" min="0" value="0"></div>
+    </div>
+    <div class="form-group"><label>备注（可选）</label><input type="text" class="form-control" id="m-note" placeholder="如：补课、重点复习等"></div>
+    <button class="btn btn-gold btn-block" onclick="submitRecord()">✅ 确认提交</button>`;
+  document.getElementById('modal-bg').classList.add('open');
+  onStudentChange();
+}
+
+window.onModeChange = function() {
+  const mode = document.getElementById('m-mode').value;
+  document.getElementById('field-tz').classList.toggle('show', mode==='online');
+  document.getElementById('field-addr').classList.toggle('show', mode==='offline');
+};
+
+window.onStudentChange = function() {
+  const sid = document.getElementById('m-student').value;
+  const s = getS(sid);
+  if (s.mode) {
+    document.getElementById('m-mode').value = s.mode;
+    onModeChange();
+  }
+  if (s.address) document.getElementById('m-addr').value = s.address;
+  if (s.timezone) document.getElementById('m-tz').value = s.timezone;
+  if (s.subject) document.getElementById('m-subject').value = s.subject;
+};
+
+window.submitRecord = async function() {
+  const date      = document.getElementById('m-date').value;
+  const starttime = document.getElementById('m-starttime').value;
+  const tid       = document.getElementById('m-teacher').value;
+  const sid       = document.getElementById('m-student').value;
+  const subject   = document.getElementById('m-subject').value;
+  const hours     = parseFloat(parseFloat(document.getElementById('m-hours').value).toFixed(2));
+  const mode      = document.getElementById('m-mode').value;
+  const tz        = mode==='online'?document.getElementById('m-tz').value:'';
+  const addr      = mode==='offline'?document.getElementById('m-addr').value:'';
+  const transport = parseFloat(document.getElementById('m-transport').value)||0;
+  const material  = parseFloat(document.getElementById('m-material').value)||0;
+  const note      = document.getElementById('m-note').value;
+  if (!date||!tid||!sid||!hours) { alert('请填写完整'); return; }
+  const btn = document.querySelector('#modal-body .btn-gold');
+  btn.textContent = '提交中...'; btn.disabled = true;
+  await addRecord({date,starttime,teacherId:tid,studentId:sid,subject,hours,mode,timezone:tz,address:addr,transport,material,note,createdAt:Date.now()});
+  closeModal();
+  if (currentUser.role==='boss') bossRecords(); else teacherRecords();
+};
+
+// ══════════════════════════════════════════
+// TEACHER
+// ══════════════════════════════════════════
+function renderTeacher() {
+  try {
+    const t = TEACHERS.find(x=>x.id===currentUser.id);
+    if (!t) {
+      document.getElementById('main').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div>找不到老师信息，请重新登录</div></div>';
+      return;
+    }
+    document.getElementById('topbar-role').textContent = t.name;
+    setTabs([
+      {icon:'📊', label:'我的概览', fn: teacherDashboard},
+      {icon:'⭐', label:'经验值', fn: () => teacherXP(TEACHERS.find(x=>x.id===currentUser.id))},
+      {icon:'📅', label:'我的记录', fn: teacherRecords},
+      {icon:'➕', label:'录入课程', fn: teacherAdd},
+      {icon:'🏖️', label:'学生请假', fn: teacherAbsence},
+      {icon:'🔑', label:'修改密码', fn: teacherChangePwd},
+    ]);
+  } catch(e) {
+    document.getElementById('main').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div>页面加载失败：${e.message}</div><div style="margin-top:12px"><button class="btn btn-gold" onclick="launchApp()">重试</button></div></div>`;
+  }
+}
+
+async function teacherXP(t) {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const all = await getRecords();
+  const myRecs = all.filter(r => r.teacherId === t.id);
+  const earnedXP = myRecs.reduce((a,r) => a + (r.hours||0), 0);
+  const totalXP = (t.historyXP||0) + earnedXP;
+  const level = totalXP >= 1000 ? '🏆 大师' : totalXP >= 500 ? '🥇 专家' : totalXP >= 200 ? '🥈 熟练' : totalXP >= 50 ? '🥉 进阶' : '🌱 新手';
+  const nextLevel = totalXP >= 1000 ? 99999 : totalXP >= 500 ? 1000 : totalXP >= 200 ? 500 : totalXP >= 50 ? 200 : 50;
+  const prevLevel = totalXP >= 1000 ? 1000 : totalXP >= 500 ? 500 : totalXP >= 200 ? 200 : totalXP >= 50 ? 50 : 0;
+  const pct = Math.min(100, (totalXP - prevLevel) / (nextLevel - prevLevel) * 100);
+
+  // monthly breakdown
+  const monthlyMap = {};
+  myRecs.forEach(r => {
+    if (!r.date) return;
+    const key = r.date.slice(0,7);
+    monthlyMap[key] = (monthlyMap[key]||0) + r.hours;
+  });
+  const monthlyRows = Object.keys(monthlyMap).sort().reverse().slice(0,6).map(k =>
+    `<div class="sum-row"><span>${k}</span><span style="font-weight:700">+${monthlyMap[k].toFixed(2)} XP</span></div>`
+  ).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">我的经验值 ⭐</div>
+    <div class="pg-sub">${t.name} · 1小时课程 = 1经验值</div>
+    <div class="card" style="text-align:center;padding:28px 20px">
+      <div style="font-size:48px;margin-bottom:8px">${level.split(' ')[0]}</div>
+      <div style="font-size:28px;font-weight:700;color:var(--gold);margin-bottom:4px">${totalXP.toFixed(2)} XP</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:16px">${level.split(' ')[1]} 等级</div>
+      <div style="background:var(--border);border-radius:20px;height:12px;overflow:hidden;margin:0 20px">
+        <div style="background:linear-gradient(90deg,var(--gold),var(--gold2));height:100%;width:${pct.toFixed(1)}%;border-radius:20px;transition:width 0.5s"></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">${totalXP >= 1000 ? '已达最高等级！' : `距下一等级还需 ${(nextLevel - totalXP).toFixed(2)} XP`}</div>
+    </div>
+    <div class="card"><div class="card-title">经验值明细</div>
+      <div class="sum-row"><span>历史经验值（2025年4月前）</span><span style="font-weight:700">${(t.historyXP||0).toFixed(2)} XP</span></div>
+      <div class="sum-row"><span>系统上线后累积</span><span style="font-weight:700;color:var(--navy)">${earnedXP.toFixed(2)} XP</span></div>
+      <hr class="divider">
+      <div class="sum-row"><span style="font-weight:700">总经验值</span><span style="font-weight:700;color:var(--gold);font-size:18px">${totalXP.toFixed(2)} XP</span></div>
+    </div>
+    ${monthlyRows ? `<div class="card"><div class="card-title">近期月度明细</div>${monthlyRows}</div>` : ''}`;
+}
+
+async function teacherDashboard() {
+  try {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...<div style="font-size:12px;color:var(--muted);margin-top:8px">正在连接数据库</div></div>`;
+  const t = TEACHERS.find(x=>x.id===currentUser.id);
+  if (!t) { document.getElementById('main').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div>加载失败，请退出重新登录</div></div>'; return; }
+  const all = await getRecords();
+  const recs = filterRecs(all, _year, _month, t.id);
+  const hrs = recs.reduce((a,r)=>a+r.hours,0);
+  const totalTransport = recs.reduce((a,r)=>a+(r.transport||0),0);
+  const totalMaterial = recs.reduce((a,r)=>a+(r.material||0),0);
+  const sal = recs.reduce((a,r)=>a+getEffectiveRate(t,r.subject,r.mode)*r.hours,0) + totalTransport + totalMaterial;
+  const allMine = all.filter(r=>r.teacherId===t.id);
+  const allHrs = allMine.reduce((a,r)=>a+r.hours,0);
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">你好，${t.name} 👋</div>
+    <div class="pg-sub">你的课时与工资概览</div>
+    ${monthPicker(_year,_month,'teacherMonthChange')}
+    <div class="stat-grid">
+      <div class="stat-tile t-navy"><div class="stat-label">本月课时</div><div class="stat-val">${hrs.toFixed(1)}<span class="stat-unit"> 时</span></div><div class="stat-sub">${recs.length} 次课</div></div>
+      <div class="stat-tile t-green"><div class="stat-label">本月工资</div><div class="stat-val">${fmt(sal)}</div></div>
+    </div>
+    <div class="card"><div class="card-title">工资明细</div>
+      <div class="sum-row"><span class="sum-label">本月上课次数</span><span style="font-weight:700">${recs.length} 次</span></div>
+      <div class="sum-row"><span class="sum-label">本月总课时</span><span style="font-weight:700">${hrs.toFixed(1)} 小时</span></div>
+      <div class="sum-row"><span class="sum-label">课时费</span><span style="font-weight:700;font-size:12px">${
+        Object.keys(t.rates||{}).length>0
+          ? Object.entries(t.rates).map(([k,v])=>k+': '+fmt(v)+'/时').join(' · ')
+          : t.rate ? fmt(t.rate)+'/时' : '请联系Karen确认'
+      }</span></div>
+      <div class="sum-row"><span class="sum-label">交通补贴合计</span><span style="font-weight:700;color:var(--navy)">${fmt(totalTransport)}</span></div>
+      <div class="sum-row"><span class="sum-label">材料费合计</span><span style="font-weight:700;color:var(--green)">${fmt(totalMaterial)}</span></div>
+      <hr class="divider">
+      <div class="sum-row"><span style="font-weight:700">本月应发工资</span><span class="sum-amt green" style="font-size:19px">${fmt(sal)}</span></div>
+    </div>
+    <div class="card"><div class="card-title">累计数据</div>
+      <div class="sum-row"><span>系统累积课时</span><span style="font-weight:700">${allHrs.toFixed(1)} 小时</span></div>
+      <div class="sum-row"><span>历史经验值</span><span style="font-weight:700">${(t.historyXP||0).toFixed(2)} XP</span></div>
+      <div class="sum-row"><span style="font-weight:700">总经验值</span><span style="font-weight:700;color:var(--gold)">${((t.historyXP||0)+allHrs).toFixed(2)} XP ⭐</span></div>
+    </div>`;
+  } catch(e) {
+    document.getElementById('main').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div>加载出错，请刷新重试</div><div style="font-size:11px;margin-top:8px;color:var(--muted)">${e.message||''}</div></div>`;
+  }
+}
+window.teacherMonthChange = v => { setMonth(v); teacherDashboard(); };
+
+async function teacherRecords() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const t = TEACHERS.find(x=>x.id===currentUser.id);
+  const all = await getRecords();
+  const recs = filterRecs(all, _year, _month, t.id).sort((a,b)=>b.date.localeCompare(a.date));
+  const rows = recs.length ? recs.map(r=>{
+    const s=getS(r.studentId);
+    const modeTag = r.mode==='online'?`<span class="mode-online">🌐 ${r.timezone||'线上'}</span>`:`<span class="mode-offline">📍 线下</span>`;
+    return `<tr>
+      <td>${r.date?r.date.slice(5):''}</td>
+      <td style="color:var(--muted);font-size:12px">${r.starttime||'—'}</td>
+      <td><span style="font-weight:600">${s.name||'—'}</span></td>
+      <td><span class="badge badge-navy">${r.subject||'中文'}</span></td>
+      <td style="text-align:center">${r.hours} 时</td>
+      <td style="text-align:center">${(r.transport||0)>0?fmt(r.transport||0):'—'}</td>
+      <td style="text-align:center;color:var(--green)">${(r.material||0)>0?fmt(r.material||0):'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${r.note||'—'}</td>
+      <td>
+        <button class="btn btn-sm" style="background:var(--blue-light,#dbeafe);color:var(--blue,#1d4e89);padding:4px 10px;margin-right:4px;" onclick="teacherEditRec('${r.id}')">✏️</button>
+        <button class="btn btn-sm" style="background:var(--red-bg,#fdecea);color:var(--red,#c0392b);padding:4px 10px;" onclick="teacherDelRec('${r.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div><div>本月暂无记录</div></div></td></tr>`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">我的上课记录</div>
+    <div class="pg-sub">仅显示你本人的记录</div>
+    ${monthPicker(_year,_month,'teacherRecMonthChange')}
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr><th>日期</th><th>时间</th><th>学生</th><th>科目</th><th>课时</th><th>交通</th><th>材料</th><th>备注</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+window.teacherRecMonthChange = v => { setMonth(v); teacherRecords(); };
+
+async function teacherAdd() {
+  const t = TEACHERS.find(x=>x.id===currentUser.id);
+  const stuOpts = STUDENTS.map(s=>`<option value="${s.id}">${s.name}${s.grade?' ('+s.grade+')':''}</option>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  const todayDay = new Date().getDay();
+  const todayCN = DAYS_CN[todayDay];
+  
+  // Get today's schedule
+  const todayEntries = await getTodaySchedule(t.id);
+  const todayCards = todayEntries.length > 0 ? `
+    <div class="card" style="border-top:3px solid var(--gold);margin-bottom:14px">
+      <div class="card-title">📆 今天（${todayCN}）的课程</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">点击快速填入</div>
+      ${todayEntries.map(e=>{
+        const s = getS(e.studentId);
+        return `<div onclick="quickFill('${e.studentId}','${e.subject}','${e.time}')" 
+          style="display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;border:1.5px solid transparent;transition:all 0.2s;"
+          onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
+          <span style="font-size:18px">📚</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">${s.name}</div>
+            <div style="font-size:11px;color:var(--muted)">${e.time} · ${e.subject}</div>
+          </div>
+          <span style="font-size:11px;color:var(--gold);font-weight:700">快速填入 →</span>
+        </div>`;
+      }).join('')}
+    </div>` : `<div class="alert alert-info" style="margin-bottom:14px">📆 今天（${todayCN}）课表暂无安排，请手动选择学生</div>`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">录入课程</div>
+    <div class="pg-sub">每次上课后请及时录入</div>
+    ${todayCards}
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group"><label>日期</label><input type="date" class="form-control" id="ta-date" value="${today}"></div>
+        <div class="form-group"><label>开始时间</label><select class="form-control" id="ta-starttime"><option value="07:00">07:00</option>
+<option value="07:05">07:05</option>
+<option value="07:10">07:10</option>
+<option value="07:15">07:15</option>
+<option value="07:20">07:20</option>
+<option value="07:25">07:25</option>
+<option value="07:30">07:30</option>
+<option value="07:35">07:35</option>
+<option value="07:40">07:40</option>
+<option value="07:45">07:45</option>
+<option value="07:50">07:50</option>
+<option value="07:55">07:55</option>
+<option value="08:00">08:00</option>
+<option value="08:05">08:05</option>
+<option value="08:10">08:10</option>
+<option value="08:15">08:15</option>
+<option value="08:20">08:20</option>
+<option value="08:25">08:25</option>
+<option value="08:30">08:30</option>
+<option value="08:35">08:35</option>
+<option value="08:40">08:40</option>
+<option value="08:45">08:45</option>
+<option value="08:50">08:50</option>
+<option value="08:55">08:55</option>
+<option value="09:00">09:00</option>
+<option value="09:05">09:05</option>
+<option value="09:10">09:10</option>
+<option value="09:15">09:15</option>
+<option value="09:20">09:20</option>
+<option value="09:25">09:25</option>
+<option value="09:30">09:30</option>
+<option value="09:35">09:35</option>
+<option value="09:40">09:40</option>
+<option value="09:45">09:45</option>
+<option value="09:50">09:50</option>
+<option value="09:55">09:55</option>
+<option value="10:00">10:00</option>
+<option value="10:05">10:05</option>
+<option value="10:10">10:10</option>
+<option value="10:15">10:15</option>
+<option value="10:20">10:20</option>
+<option value="10:25">10:25</option>
+<option value="10:30">10:30</option>
+<option value="10:35">10:35</option>
+<option value="10:40">10:40</option>
+<option value="10:45">10:45</option>
+<option value="10:50">10:50</option>
+<option value="10:55">10:55</option>
+<option value="11:00">11:00</option>
+<option value="11:05">11:05</option>
+<option value="11:10">11:10</option>
+<option value="11:15">11:15</option>
+<option value="11:20">11:20</option>
+<option value="11:25">11:25</option>
+<option value="11:30">11:30</option>
+<option value="11:35">11:35</option>
+<option value="11:40">11:40</option>
+<option value="11:45">11:45</option>
+<option value="11:50">11:50</option>
+<option value="11:55">11:55</option>
+<option value="12:00">12:00</option>
+<option value="12:05">12:05</option>
+<option value="12:10">12:10</option>
+<option value="12:15">12:15</option>
+<option value="12:20">12:20</option>
+<option value="12:25">12:25</option>
+<option value="12:30">12:30</option>
+<option value="12:35">12:35</option>
+<option value="12:40">12:40</option>
+<option value="12:45">12:45</option>
+<option value="12:50">12:50</option>
+<option value="12:55">12:55</option>
+<option value="13:00">13:00</option>
+<option value="13:05">13:05</option>
+<option value="13:10">13:10</option>
+<option value="13:15">13:15</option>
+<option value="13:20">13:20</option>
+<option value="13:25">13:25</option>
+<option value="13:30">13:30</option>
+<option value="13:35">13:35</option>
+<option value="13:40">13:40</option>
+<option value="13:45">13:45</option>
+<option value="13:50">13:50</option>
+<option value="13:55">13:55</option>
+<option value="14:00">14:00</option>
+<option value="14:05">14:05</option>
+<option value="14:10">14:10</option>
+<option value="14:15">14:15</option>
+<option value="14:20">14:20</option>
+<option value="14:25">14:25</option>
+<option value="14:30">14:30</option>
+<option value="14:35">14:35</option>
+<option value="14:40">14:40</option>
+<option value="14:45">14:45</option>
+<option value="14:50">14:50</option>
+<option value="14:55">14:55</option>
+<option value="15:00">15:00</option>
+<option value="15:05">15:05</option>
+<option value="15:10">15:10</option>
+<option value="15:15">15:15</option>
+<option value="15:20">15:20</option>
+<option value="15:25">15:25</option>
+<option value="15:30">15:30</option>
+<option value="15:35">15:35</option>
+<option value="15:40">15:40</option>
+<option value="15:45">15:45</option>
+<option value="15:50">15:50</option>
+<option value="15:55">15:55</option>
+<option value="16:00">16:00</option>
+<option value="16:05">16:05</option>
+<option value="16:10">16:10</option>
+<option value="16:15">16:15</option>
+<option value="16:20">16:20</option>
+<option value="16:25">16:25</option>
+<option value="16:30">16:30</option>
+<option value="16:35">16:35</option>
+<option value="16:40">16:40</option>
+<option value="16:45">16:45</option>
+<option value="16:50">16:50</option>
+<option value="16:55">16:55</option>
+<option value="17:00">17:00</option>
+<option value="17:05">17:05</option>
+<option value="17:10">17:10</option>
+<option value="17:15">17:15</option>
+<option value="17:20">17:20</option>
+<option value="17:25">17:25</option>
+<option value="17:30">17:30</option>
+<option value="17:35">17:35</option>
+<option value="17:40">17:40</option>
+<option value="17:45">17:45</option>
+<option value="17:50">17:50</option>
+<option value="17:55">17:55</option>
+<option value="18:00">18:00</option>
+<option value="18:05">18:05</option>
+<option value="18:10">18:10</option>
+<option value="18:15">18:15</option>
+<option value="18:20">18:20</option>
+<option value="18:25">18:25</option>
+<option value="18:30">18:30</option>
+<option value="18:35">18:35</option>
+<option value="18:40">18:40</option>
+<option value="18:45">18:45</option>
+<option value="18:50">18:50</option>
+<option value="18:55">18:55</option>
+<option value="19:00">19:00</option>
+<option value="19:05">19:05</option>
+<option value="19:10">19:10</option>
+<option value="19:15">19:15</option>
+<option value="19:20">19:20</option>
+<option value="19:25">19:25</option>
+<option value="19:30">19:30</option>
+<option value="19:35">19:35</option>
+<option value="19:40">19:40</option>
+<option value="19:45">19:45</option>
+<option value="19:50">19:50</option>
+<option value="19:55">19:55</option>
+<option value="20:00">20:00</option>
+<option value="20:05">20:05</option>
+<option value="20:10">20:10</option>
+<option value="20:15">20:15</option>
+<option value="20:20">20:20</option>
+<option value="20:25">20:25</option>
+<option value="20:30">20:30</option>
+<option value="20:35">20:35</option>
+<option value="20:40">20:40</option>
+<option value="20:45">20:45</option>
+<option value="20:50">20:50</option>
+<option value="20:55">20:55</option>
+<option value="21:00">21:00</option>
+<option value="21:05">21:05</option>
+<option value="21:10">21:10</option>
+<option value="21:15">21:15</option>
+<option value="21:20">21:20</option>
+<option value="21:25">21:25</option>
+<option value="21:30">21:30</option>
+<option value="21:35">21:35</option>
+<option value="21:40">21:40</option>
+<option value="21:45">21:45</option>
+<option value="21:50">21:50</option>
+<option value="21:55">21:55</option></select></div>
+      </div>
+      <div class="form-group"><label>学生</label>
+        <select class="form-control" id="ta-student" onchange="taStudentChange()">
+          <option value="">— 选择学生 —</option>${stuOpts}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>科目</label>
+          <select class="form-control" id="ta-subject">${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>课时（小时）</label>
+          <input type="number" class="form-control" id="ta-hours" value="2" step="0.01" min="0.25" max="12">
+        </div>
+      </div>
+      <div class="form-group"><label>上课方式</label>
+        <select class="form-control" id="ta-mode" onchange="taModeChange()">
+          <option value="offline">📍 线下课</option>
+          <option value="online">🌐 线上课</option>
+        </select>
+      </div>
+      <div class="form-group cond-field" id="ta-field-tz"><label>时区</label>
+        <select class="form-control" id="ta-tz">${TIMEZONES.map(z=>`<option>${z}</option>`).join('')}</select>
+      </div>
+      <div class="form-group cond-field show" id="ta-field-addr"><label>上课地址（自动填入）</label>
+        <input type="text" class="form-control" id="ta-addr" placeholder="选择学生后自动填入">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>交通补贴（元）</label>
+          <input type="number" class="form-control" id="ta-transport" placeholder="0" step="1" min="0" value="0">
+        </div>
+        <div class="form-group"><label>材料费（元）</label>
+          <input type="number" class="form-control" id="ta-material" placeholder="0" step="1" min="0" value="0">
+        </div>
+      </div>
+      <div class="form-group"><label>备注（可选）</label>
+        <input type="text" class="form-control" id="ta-note" placeholder="如：补课、重点复习等">
+      </div>
+      <button class="btn btn-gold btn-block" onclick="taSubmit('${t.id}')">✅ 提交记录</button>
+    </div>
+    <div class="alert alert-info">ℹ️ 提交后 Karen 可立即查看，如有错误请联系Karen修改</div>`;
+}
+
+window.taStudentChange = function() {
+  const sid = document.getElementById('ta-student').value;
+  if (!sid) return;
+  const s = getS(sid);
+  if (s.mode) { document.getElementById('ta-mode').value = s.mode; taModeChange(); }
+  if (s.address) document.getElementById('ta-addr').value = s.address;
+  if (s.timezone) document.getElementById('ta-tz').value = s.timezone;
+  if (s.subject) document.getElementById('ta-subject').value = s.subject;
+};
+window.taModeChange = function() {
+  const m = document.getElementById('ta-mode').value;
+  document.getElementById('ta-field-tz').classList.toggle('show', m==='online');
+  document.getElementById('ta-field-addr').classList.toggle('show', m==='offline');
+};
+window.taSubmit = async function(tid) {
+  const date      = document.getElementById('ta-date').value;
+  const starttime = document.getElementById('ta-starttime').value;
+  const sid       = document.getElementById('ta-student').value;
+  const subject   = document.getElementById('ta-subject').value;
+  const hours     = parseFloat(parseFloat(document.getElementById('ta-hours').value).toFixed(2));
+  const mode      = document.getElementById('ta-mode').value;
+  const tz        = mode==='online'?document.getElementById('ta-tz').value:'';
+  const addr      = mode==='offline'?document.getElementById('ta-addr').value:'';
+  const transport = parseFloat(document.getElementById('ta-transport').value)||0;
+  const material  = parseFloat(document.getElementById('ta-material').value)||0;
+  const note      = document.getElementById('ta-note').value;
+  if (!date||!sid||!hours) { alert('请填写完整信息'); return; }
+  const btn = document.querySelector('#main .btn-gold');
+  btn.textContent='提交中...'; btn.disabled=true;
+  await addRecord({date,starttime,teacherId:tid,studentId:sid,subject,hours,mode,timezone:tz,address:addr,transport,material,note,createdAt:Date.now()});
+  alert('✅ 已提交！Karen 可以看到你的记录了。');
+  teacherAdd();
+};
+
+// ══════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════
+function closeMBG(e) { if(e.target===document.getElementById('modal-bg')) closeModal(); }
+function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+window.closeModal = closeModal;
+
+// ══════════════════════════════════════════
+// TEACHER EDIT / DELETE OWN RECORDS
+// ══════════════════════════════════════════
+window.teacherDelRec = async function(id) {
+  if (!confirm('确认删除这条记录？')) return;
+  await deleteRecord(id);
+  teacherRecords();
+};
+
+window.teacherEditRec = async function(id) {
+  const all = await getRecords();
+  const r = all.find(x=>x.id===id);
+  if (!r) return;
+  const stuOpts = STUDENTS.map(s=>`<option value="${s.id}" ${s.id===r.studentId?'selected':''}>${s.name}${s.grade?' ('+s.grade+')':''}</option>`).join('');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-title">✏️ 修改记录</div>
+    <div class="form-row">
+      <div class="form-group"><label>日期</label><input type="date" class="form-control" id="er-date" value="${r.date||''}"></div>
+      <div class="form-group"><label>开始时间</label><input type="time" class="form-control" id="er-time" value="${r.starttime||''}"></div>
+    </div>
+    <div class="form-group"><label>学生</label><select class="form-control" id="er-student">${stuOpts}</select></div>
+    <div class="form-row">
+      <div class="form-group"><label>科目</label>
+        <select class="form-control" id="er-subject">
+          ${SUBJECTS.map(s=>`<option value="${s}" ${s===r.subject?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>课时</label><input type="number" class="form-control" id="er-hours" value="${r.hours}" step="0.01" min="0.25"></div>
+    </div>
+    <div class="form-group"><label>上课方式</label>
+      <select class="form-control" id="er-mode" onchange="erModeChange()">
+        <option value="offline" ${r.mode==='offline'?'selected':''}>📍 线下课</option>
+        <option value="online" ${r.mode==='online'?'selected':''}>🌐 线上课</option>
+      </select>
+    </div>
+    <div class="form-group cond-field ${r.mode==='online'?'show':''}" id="er-field-tz"><label>时区</label>
+      <select class="form-control" id="er-tz">${TIMEZONES.map(z=>`<option ${z===r.timezone?'selected':''}>${z}</option>`).join('')}</select>
+    </div>
+    <div class="form-group cond-field ${r.mode!=='online'?'show':''}" id="er-field-addr"><label>地址</label>
+      <input type="text" class="form-control" id="er-addr" value="${r.address||''}">
+    </div>
+    <div class="form-group"><label>交通补贴</label><input type="number" class="form-control" id="er-transport" value="${r.transport||0}" step="1" min="0"></div>
+    <div class="form-group"><label>备注</label><input type="text" class="form-control" id="er-note" value="${r.note||''}"></div>
+    <button class="btn btn-gold btn-block" onclick="saveTeacherEdit('${id}')">保存修改</button>
+  `;
+  document.getElementById('modal-bg').classList.add('open');
+};
+
+window.erModeChange = function() {
+  const m = document.getElementById('er-mode').value;
+  document.getElementById('er-field-tz').classList.toggle('show', m==='online');
+  document.getElementById('er-field-addr').classList.toggle('show', m!=='online');
+};
+
+window.saveTeacherEdit = async function(id) {
+  const date      = document.getElementById('er-date').value;
+  const starttime = document.getElementById('er-time').value;
+  const sid       = document.getElementById('er-student').value;
+  const subject   = document.getElementById('er-subject').value;
+  const hours     = parseFloat(parseFloat(document.getElementById('er-hours').value).toFixed(2));
+  const mode      = document.getElementById('er-mode').value;
+  const tz        = mode==='online'?document.getElementById('er-tz').value:'';
+  const addr      = mode!=='online'?document.getElementById('er-addr').value:'';
+  const transport = parseFloat(document.getElementById('er-transport').value)||0;
+  const note      = document.getElementById('er-note').value;
+  if (!date||!sid||!hours) { alert('请填写完整'); return; }
+  const btn = document.querySelector('#modal-body .btn-gold');
+  btn.textContent='保存中...'; btn.disabled=true;
+  if (demoMode) {
+    const idx = localRecords.findIndex(r=>r.id===id);
+    if (idx>-1) { localRecords[idx] = {...localRecords[idx], date, starttime, studentId:sid, subject, hours, mode, timezone:tz, address:addr, transport, note}; saveLocal(); }
+  } else {
+    await db.collection('records').doc(id).update({date, starttime, studentId:sid, subject, hours, mode, timezone:tz, address:addr, transport, note});
+  }
+  closeModal();
+  teacherRecords();
+};
+
+// ══════════════════════════════════════════
+// WEEKLY SCHEDULE SYSTEM
+// ══════════════════════════════════════════
+const DAYS_CN = ['周日','周一','周二','周三','周四','周五','周六'];
+const DAYS_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+async function getSchedule(teacherId) {
+  if (demoMode) {
+    const raw = localStorage.getItem('schedule_'+teacherId);
+    return raw ? JSON.parse(raw) : [];
+  }
+  try {
+    const snap = await db.collection('schedules').doc(teacherId).get();
+    if (snap.exists) return snap.data().entries || [];
+    return [];
+  } catch(e) { return []; }
+}
+
+async function saveSchedule(teacherId, entries) {
+  if (demoMode) {
+    localStorage.setItem('schedule_'+teacherId, JSON.stringify(entries));
+    return;
+  }
+  await db.collection('schedules').doc(teacherId).set({entries, updatedAt: Date.now()});
+}
+
+async function teacherSchedule() {
+  const t = TEACHERS.find(x=>x.id===currentUser.id);
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const entries = await getSchedule(t.id);
+
+  const stuOpts = STUDENTS.map(s=>`<option value="${s.id}">${s.name}${s.grade?' ('+s.grade+')':''}</option>`).join('');
+  const timeOpts = [${','.join([f'"{t}"' for t in times])}].map(t=>`<option value="${t}">${t}</option>`).join('');
+  const dayOpts = DAYS_CN.map((d,i)=>`<option value="${i}">${d}</option>`).join('');
+
+  // Group entries by day
+  const byDay = {};
+  DAYS_CN.forEach((_,i) => byDay[i] = entries.filter(e=>e.day==i));
+
+  const scheduleRows = DAYS_CN.map((day, di) => {
+    const dayEntries = byDay[di] || [];
+    const entryCards = dayEntries.map((e,ei) => {
+      const s = getS(e.studentId);
+      return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--gold);font-weight:700;min-width:45px">${e.time}</span>
+        <span style="font-size:13px;font-weight:600;flex:1">${s.name||'?'}</span>
+        <span class="badge badge-navy" style="font-size:10px">${e.subject||'中文'}</span>
+        <button onclick="removeScheduleEntry('${t.id}',${di},${ei})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;padding:2px 4px;">✕</button>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--navy);font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        <span style="background:var(--navy);color:#fff;border-radius:6px;padding:2px 10px;font-size:11px">${day}</span>
+        ${dayEntries.length===0?'<span style="font-size:11px;color:var(--muted)">暂无课程</span>':''}
+      </div>
+      ${entryCards}
+    </div>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">我的每周课表 📆</div>
+    <div class="pg-sub">设定固定课程，录入时自动提示今日课程</div>
+    <div class="alert alert-info">💡 课表设好后，录入课程时会自动显示今天的学生，无需手动选择</div>
+
+    <div class="card">
+      <div class="card-title">添加固定课程</div>
+      <div class="form-row">
+        <div class="form-group"><label>星期</label>
+          <select class="form-control" id="sch-day">${dayOpts}</select>
+        </div>
+        <div class="form-group"><label>时间</label>
+          <select class="form-control" id="sch-time">${timeOpts}</select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>学生</label>
+          <select class="form-control" id="sch-student">${stuOpts}</select>
+        </div>
+        <div class="form-group"><label>科目</label>
+          <select class="form-control" id="sch-subject">
+            ${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="addScheduleEntry('${t.id}')">＋ 添加到课表</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">本周课表</div>
+      ${scheduleRows}
+    </div>
+  `;
+}
+
+window.addScheduleEntry = async function(tid) {
+  const day     = parseInt(document.getElementById('sch-day').value);
+  const time    = document.getElementById('sch-time').value;
+  const sid     = document.getElementById('sch-student').value;
+  const subject = document.getElementById('sch-subject').value;
+  const s = getS(sid);
+  const entries = await getSchedule(tid);
+  // Check duplicate
+  const exists = entries.find(e=>e.day===day && e.time===time && e.studentId===sid);
+  if (exists) { alert('这个时段已有这位学生的课程了'); return; }
+  entries.push({day, time, studentId:sid, subject});
+  entries.sort((a,b)=>a.day!==b.day?a.day-b.day:a.time.localeCompare(b.time));
+  await saveSchedule(tid, entries);
+  teacherSchedule();
+};
+
+window.removeScheduleEntry = async function(tid, day, idx) {
+  const entries = await getSchedule(tid);
+  const dayEntries = entries.filter(e=>e.day==day);
+  const toRemove = dayEntries[idx];
+  const newEntries = entries.filter(e=>!(e.day==toRemove.day&&e.time===toRemove.time&&e.studentId===toRemove.studentId));
+  await saveSchedule(tid, newEntries);
+  teacherSchedule();
+};
+
+// Get today's schedule for a teacher
+async function getTodaySchedule(teacherId) {
+  const today = new Date().getDay(); // 0=Sun, 6=Sat
+  const entries = await getSchedule(teacherId);
+  return entries.filter(e=>e.day===today).sort((a,b)=>a.time.localeCompare(b.time));
+}
+
+window.quickFill = function(sid, subject, time) {
+  const sEl = document.getElementById('ta-student');
+  const subEl = document.getElementById('ta-subject');
+  const timeEl = document.getElementById('ta-starttime');
+  if (sEl) sEl.value = sid;
+  if (subEl) subEl.value = subject;
+  if (timeEl) timeEl.value = time;
+  // Trigger student change to autofill address etc
+  taStudentChange();
+  // Scroll to form
+  document.querySelector('.card:last-of-type')?.scrollIntoView({behavior:'smooth'});
+};
+
+// ══════════════════════════════════════════
+// ABSENCE / CANCELLATION SYSTEM
+// ══════════════════════════════════════════
+const ABSENCE_POLICIES = [
+  {value:0,   label:'0% — 提前1周以上 / 病假',          color:'var(--green)'},
+  {value:0,   label:'0% — 病假（免费取消）',             color:'var(--green)'},
+  {value:30,  label:'30% — 少于12小时通知',             color:'#a06800'},
+  {value:50,  label:'50% — 少于6小时通知',              color:'#a06800'},
+  {value:75,  label:'75% — 少于3小时通知',              color:'var(--red)'},
+  {value:100, label:'100% — 老师已到达/学生缺席（+交通）', color:'var(--red)'},
+];
+
+async function getAbsences() {
+  if (demoMode) return [];
+  try {
+    const snap = await db.collection('absences').orderBy('date','desc').get();
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  } catch(e) { return []; }
+}
+
+function teacherAbsence() {
+  const t = TEACHERS.find(x=>x.id===currentUser.id);
+  const stuOpts = STUDENTS.map(s=>`<option value="${s.id}">${s.name}${s.grade?' ('+s.grade+')':''}</option>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  const policyOpts = ABSENCE_POLICIES.map(p=>`<option value="${p.value}">${p.label}</option>`).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">学生请假记录 🏖️</div>
+    <div class="pg-sub">学生无法上课时由老师填写，自动计算扣费</div>
+    <div class="card">
+      <div class="form-group"><label>日期</label>
+        <input type="date" class="form-control" id="ab-date" value="${today}">
+      </div>
+      <div class="form-group"><label>学生</label>
+        <select class="form-control" id="ab-student">${stuOpts}</select>
+      </div>
+      <div class="form-group"><label>原定课时（小时）</label>
+        <input type="number" class="form-control" id="ab-hours" value="2" step="0.5" min="0.5">
+      </div>
+      <div class="form-group"><label>取消政策 / 扣费比例</label>
+        <select class="form-control" id="ab-policy">${policyOpts}</select>
+      </div>
+      <div class="form-group"><label>备注（可选）</label>
+        <input type="text" class="form-control" id="ab-note" placeholder="如：学生生病、临时有事等">
+      </div>
+      <button class="btn btn-gold btn-block" onclick="submitAbsence('${t.id}')">提交请假记录</button>
+    </div>
+    <div class="alert alert-info">ℹ️ 提交后 Karen 可查看，扣费将自动反映在学费账户</div>`;
+}
+
+window.submitAbsence = async function(tid) {
+  const date    = document.getElementById('ab-date').value;
+  const sid     = document.getElementById('ab-student').value;
+  const hours   = parseFloat(document.getElementById('ab-hours').value)||0;
+  const policy  = parseInt(document.getElementById('ab-policy').value);
+  const note    = document.getElementById('ab-note').value;
+  if (!date||!sid||!hours) { alert('请填写完整'); return; }
+  const s = getS(sid);
+  const chargeHours = hours * policy / 100;
+  const chargeAmt   = chargeHours * (s.rate||0);
+  const btn = document.querySelector('#main .btn-gold');
+  btn.textContent='提交中...'; btn.disabled=true;
+  if (!demoMode) {
+    await db.collection('absences').add({
+      date, studentId:sid, teacherId:tid,
+      hours, policy, chargeHours, chargeAmt,
+      note, createdAt:Date.now()
+    });
+  }
+  alert(`✅ 请假记录已提交！\n扣费：${chargeHours.toFixed(1)} 课时 (${policy}%)`);
+  teacherAbsence();
+};
+
+async function bossAbsence() {
+  document.getElementById('main').innerHTML = `<div class="loading"><div class="spinner"></div>加载中...</div>`;
+  const absences = await getAbsences();
+
+  const rows = absences.length ? absences.map(a => {
+    const s = getS(a.studentId);
+    const t = getT(a.teacherId);
+    const p = ABSENCE_POLICIES.find(x=>x.value===a.policy)||{label:a.policy+'%',color:'var(--muted)'};
+    return `<tr>
+      <td>${a.date?a.date.slice(5):'—'}</td>
+      <td><span style="font-weight:700">${s.name||'—'}</span></td>
+      <td>${t.name||'—'}</td>
+      <td style="text-align:center">${a.hours} 时</td>
+      <td><span class="badge" style="background:${p.color}22;color:${p.color}">${p.label}</span></td>
+      <td style="text-align:center;font-weight:700;color:var(--red)">${a.chargeHours?a.chargeHours.toFixed(1)+' 时':'—'}</td>
+      <td style="text-align:right;color:var(--red)">${a.chargeAmt?fmt(a.chargeAmt):'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${a.note||'—'}</td>
+      <td><button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);padding:4px 8px" onclick="delAbsence('${a.id}')">🗑</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">🏖️</div><div>暂无请假记录</div></div></td></tr>`;
+
+  const totalCharge = absences.reduce((a,r)=>a+(r.chargeAmt||0),0);
+  const totalAbsHours = absences.reduce((a,r)=>a+(r.hours||0),0);
+
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">学生请假记录</div>
+    <div class="pg-sub">所有学生请假及扣费情况</div>
+    <div class="stat-grid">
+      <div class="stat-tile t-navy"><div class="stat-label">请假次数</div><div class="stat-val">${absences.length}<span class="stat-unit"> 次</span></div></div>
+      <div class="stat-tile t-red"><div class="stat-label">请假课时</div><div class="stat-val">${totalAbsHours.toFixed(1)}<span class="stat-unit"> 时</span></div></div>
+      <div class="stat-tile t-gold"><div class="stat-label">应收违约金</div><div class="stat-val" style="font-size:18px">${fmt(totalCharge)}</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden"><div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>日期</th><th>学生</th><th>老师</th><th>课时</th><th>政策</th><th>扣费课时</th><th>扣费金额</th><th>备注</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div></div>`;
+}
+
+window.delAbsence = async function(id) {
+  if (!confirm('确认删除？')) return;
+  if (!demoMode) await db.collection('absences').doc(id).delete();
+  bossAbsence();
+};
+
+// ══════════════════════════════════════════
+// CHANGE PASSWORD
+// ══════════════════════════════════════════
+function teacherChangePwd() {
+  document.getElementById('main').innerHTML = `
+    <div class="pg-head">修改密码 🔑</div>
+    <div class="pg-sub">修改后下次登录使用新密码</div>
+    <div class="card">
+      <div class="form-group">
+        <label>当前密码</label>
+        <input type="password" class="form-control" id="cp-current" placeholder="输入当前密码">
+      </div>
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" class="form-control" id="cp-new" placeholder="输入新密码（至少4位）">
+      </div>
+      <div class="form-group">
+        <label>确认新密码</label>
+        <input type="password" class="form-control" id="cp-confirm" placeholder="再输入一次">
+      </div>
+      <button class="btn btn-gold btn-block" onclick="saveTeacherPwd()">保存新密码</button>
+      <div id="cp-msg" style="margin-top:12px;font-size:13px;text-align:center;display:none"></div>
+    </div>
+    <div class="alert alert-info">ℹ️ 密码修改后立即生效，请记好新密码</div>
+  `;
+}
+
+window.saveTeacherPwd = async function() {
+  const current = document.getElementById('cp-current').value;
+  const newPwd   = document.getElementById('cp-new').value;
+  const confirm  = document.getElementById('cp-confirm').value;
+  const msg      = document.getElementById('cp-msg');
+
+  const t = TEACHERS.find(x => x.id === currentUser.id);
+  let correctPwd = t.pwd;
+  if (db) {
+    try {
+      const doc = await db.collection('passwords').doc(t.id).get();
+      if (doc.exists && doc.data().pwd) correctPwd = doc.data().pwd;
+    } catch(e) {}
+  }
+
+  if (current !== correctPwd) {
+    msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='❌ 当前密码错误'; return;
+  }
+  if (newPwd.length < 4) {
+    msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='❌ 新密码至少4位'; return;
+  }
+  if (newPwd !== confirm) {
+    msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='❌ 两次输入不一致'; return;
+  }
+
+  const btn = document.querySelector('#main .btn-gold');
+  btn.textContent = '保存中...'; btn.disabled = true;
+
+  if (db) {
+    await db.collection('passwords').doc(t.id).set({pwd: newPwd});
+  }
+  msg.style.display='block'; msg.style.color='var(--green)';
+  msg.textContent='✅ 密码已更新！';
+  btn.textContent='保存新密码'; btn.disabled=false;
+  document.getElementById('cp-current').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+};
+
+window.bossSavePwd = async function() {
+  const newPwd  = document.getElementById('boss-new-pwd').value;
+  const confirm = document.getElementById('boss-confirm-pwd').value;
+  const msg     = document.getElementById('boss-pwd-msg');
+
+  if (newPwd.length < 4) {
+    msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='❌ 密码至少4位'; return;
+  }
+  if (newPwd !== confirm) {
+    msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='❌ 两次输入不一致'; return;
+  }
+
+  if (db) {
+    await db.collection('passwords').doc('boss').set({pwd: newPwd});
+  }
+  msg.style.display='block'; msg.style.color='var(--green)';
+  msg.textContent='✅ 老板密码已更新！';
+  document.getElementById('boss-new-pwd').value='';
+  document.getElementById('boss-confirm-pwd').value='';
+};
+</script>
+</body>
+</html>
